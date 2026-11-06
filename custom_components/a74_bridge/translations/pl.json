@@ -83,5 +83,77 @@
         "name": "Nagrywanie (ręcznie)"
       }
     }
+  },
+  "services": {
+    "preset_save": {
+      "name": "Save preset",
+      "description": "Downloads the camera settings file (validated on the bridge) and stores it as /share/camera_presets/<preset>/<camera>.DAT.",
+      "fields": {
+        "device_id": {
+          "name": "Bridge",
+          "description": "a74_bridge devices; empty = all."
+        },
+        "preset": {
+          "name": "Preset name",
+          "description": "Folder name under /share/camera_presets."
+        }
+      }
+    },
+    "preset_load": {
+      "name": "Load preset",
+      "description": "Uploads /share/camera_presets/<preset>/<camera>.DAT to the camera. The camera reboots (HDMI drops for about 11 s). Waits for verification.",
+      "fields": {
+        "device_id": {
+          "name": "Bridge",
+          "description": "a74_bridge devices; empty = all."
+        },
+        "preset": {
+          "name": "Preset name",
+          "description": "Folder name under /share/camera_presets."
+        }
+      }
+    },
+    "clock_sync": {
+      "name": "Sync camera clock",
+      "description": "Reads the camera clock and corrects it from the bridge when it is off by more than 2 s.",
+      "fields": {
+        "device_id": {
+          "name": "Bridge",
+          "description": "a74_bridge devices; empty = all."
+        },
+        "force": {
+          "name": "Force",
+          "description": "Correct even when the bridge has no NTP sync."
+        }
+      }
+    },
+    "set_properties": {
+      "name": "Set camera properties",
+      "description": "Raw SDK values, e.g. {\"iso\": 800, \"aperture\": 400}.",
+      "fields": {
+        "device_id": {
+          "name": "Bridge",
+          "description": "a74_bridge devices; empty = all."
+        },
+        "properties": {
+          "name": "Properties",
+          "description": "Object of property name (SDK name or alias) to raw value."
+        }
+      }
+    },
+    "record": {
+      "name": "Recording",
+      "description": "Manual use from the panel only; automations never start or stop recording.",
+      "fields": {
+        "device_id": {
+          "name": "Bridge",
+          "description": "a74_bridge devices; empty = all."
+        },
+        "action": {
+          "name": "Action",
+          "description": "start or stop"
+        }
+      }
+    }
   }
 }

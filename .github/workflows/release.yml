@@ -23,11 +23,11 @@ jobs:
           PREV=$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)
           RANGE="${PREV:+$PREV..}${GITHUB_REF_NAME}"
           {
-            echo "## Zmiany w ${GITHUB_REF_NAME#v}"
+            echo "## Changes in ${GITHUB_REF_NAME#v}"
             echo
             git log --no-merges --pretty='- %s' "$RANGE" | sed -E 's/^- [0-9]+\.[0-9]+\.[0-9]+: /- /'
             echo
-            [ -n "$PREV" ] && echo "Pełna lista: https://github.com/${GITHUB_REPOSITORY}/compare/${PREV}...${GITHUB_REF_NAME}"
+            [ -n "$PREV" ] && echo "Full changelog: https://github.com/${GITHUB_REPOSITORY}/compare/${PREV}...${GITHUB_REF_NAME}"
           } > notes.md
           cat notes.md
       - name: Create release
