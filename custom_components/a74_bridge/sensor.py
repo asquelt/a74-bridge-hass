@@ -31,6 +31,20 @@ def _g(d: dict, *path: str, default=None):
     return default if d is None else d
 
 
+def _hms(seconds, status=None) -> str | None:
+    """Remaining recording time as H:MM:SS; the slot status when there is no usable card."""
+    if seconds is None:
+        return None if status is None else ("no card" if status == "no_card" else status)
+    seconds = int(seconds)
+    return f"{seconds // 3600}:{seconds % 3600 // 60:02d}:{seconds % 60:02d}"
+
+
+def _slot_attrs(d: dict, slot: str) -> dict:
+    sec = _g(d, "camera", slot, "remaining_s")
+    return {"remaining_s": sec, "remaining_min": None if sec is None else round(sec / 60), "status": _g(d, "camera", slot, "status"),
+            "remaining_shots": _g(d, "camera", slot, "remaining_shots"), "writing": _g(d, "camera", slot, "writing"), "stale": _g(d, "camera", "cache_stale")}
+
+
 SENSORS: tuple[A74SensorDescription, ...] = (
     A74SensorDescription(key="usb_mode", translation_key="usb_mode", icon="mdi:usb", value=lambda d: _g(d, "usb", "mode"), attrs=lambda d: {"pid": _g(d, "usb", "pid")}),
     A74SensorDescription(key="firmware", translation_key="firmware", icon="mdi:chip", entity_category=EntityCategory.DIAGNOSTIC, value=lambda d: _g(d, "camera", "firmware")),
@@ -52,12 +66,10 @@ SENSORS: tuple[A74SensorDescription, ...] = (
                          entity_category=EntityCategory.DIAGNOSTIC, value=lambda d: _g(d, "camera", "disconnects")),
     A74SensorDescription(key="timecode_jam", translation_key="timecode_jam", icon="mdi:timer-sync-outline", value=lambda d: _g(d, "timecode", "set_to") or "never",
                          attrs=lambda d: {k: _g(d, "timecode", k) for k in ("at", "fps", "latency_ms", "preset_readback", "ok", "error", "run_free", "make_preset", "format")}),
-    A74SensorDescription(key="slot1_remaining", translation_key="slot1_remaining", icon="mdi:sd", native_unit_of_measurement=UnitOfTime.MINUTES, device_class=SensorDeviceClass.DURATION,
-                         state_class=SensorStateClass.MEASUREMENT, value=lambda d: (lambda v: None if v is None else round(v / 60))(_g(d, "camera", "slot1", "remaining_s")),
-                         attrs=lambda d: {"status": _g(d, "camera", "slot1", "status"), "remaining_shots": _g(d, "camera", "slot1", "remaining_shots"), "writing": _g(d, "camera", "slot1", "writing"), "stale": _g(d, "camera", "cache_stale")}),
-    A74SensorDescription(key="slot2_remaining", translation_key="slot2_remaining", icon="mdi:sd", native_unit_of_measurement=UnitOfTime.MINUTES, device_class=SensorDeviceClass.DURATION,
-                         state_class=SensorStateClass.MEASUREMENT, value=lambda d: (lambda v: None if v is None else round(v / 60))(_g(d, "camera", "slot2", "remaining_s")),
-                         attrs=lambda d: {"status": _g(d, "camera", "slot2", "status"), "remaining_shots": _g(d, "camera", "slot2", "remaining_shots"), "writing": _g(d, "camera", "slot2", "writing"), "stale": _g(d, "camera", "cache_stale")}),
+    A74SensorDescription(key="slot1_remaining", translation_key="slot1_remaining", icon="mdi:sd", value=lambda d: _hms(_g(d, "camera", "slot1", "remaining_s"), _g(d, "camera", "slot1", "status")),
+                         attrs=lambda d: _slot_attrs(d, "slot1")),
+    A74SensorDescription(key="slot2_remaining", translation_key="slot2_remaining", icon="mdi:sd", value=lambda d: _hms(_g(d, "camera", "slot2", "remaining_s"), _g(d, "camera", "slot2", "status")),
+                         attrs=lambda d: _slot_attrs(d, "slot2")),
     A74SensorDescription(key="bridge_uptime", translation_key="bridge_uptime", native_unit_of_measurement=UnitOfTime.SECONDS, entity_category=EntityCategory.DIAGNOSTIC,
                          entity_registry_enabled_default=False, value=lambda d: _g(d, "bridge", "uptime_s")),
 )
