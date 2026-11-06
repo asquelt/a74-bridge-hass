@@ -186,6 +186,8 @@ def _register_services(hass: HomeAssistant) -> None:
                 out[co.camera_id] = await co.client.clock_sync(bool(call.data.get("force")))
             except BridgeError as e:
                 out[co.camera_id] = {"error": e.body}
+            except Exception as e:  # noqa: BLE001 - bridge unreachable etc.
+                out[co.camera_id] = {"error": str(e)}
         return out
 
     async def set_properties(call: ServiceCall) -> ServiceResponse:
@@ -195,6 +197,8 @@ def _register_services(hass: HomeAssistant) -> None:
                 out[co.camera_id] = await co.client.set_properties(dict(call.data["properties"]))
             except BridgeError as e:
                 out[co.camera_id] = {"error": e.body}
+            except Exception as e:  # noqa: BLE001 - bridge unreachable etc.
+                out[co.camera_id] = {"error": str(e)}
         return out
 
     async def timecode_jam(call: ServiceCall) -> ServiceResponse:
@@ -205,6 +209,8 @@ def _register_services(hass: HomeAssistant) -> None:
                 out[co.camera_id] = await co.client.timecode_jam(fps)
             except BridgeError as e:
                 out[co.camera_id] = {"error": e.body}
+            except Exception as e:  # noqa: BLE001 - bridge unreachable etc.
+                out[co.camera_id] = {"error": str(e)}
         return out
 
     async def record(call: ServiceCall) -> ServiceResponse:
@@ -217,6 +223,8 @@ def _register_services(hass: HomeAssistant) -> None:
                     out[f"{co.camera_id} jam"] = await co.client.timecode_jam(int(call.data.get("fps", 25)))
                 except BridgeError as e:
                     out[f"{co.camera_id} jam"] = {"error": e.body}
+                except Exception as e:  # noqa: BLE001
+                    out[f"{co.camera_id} jam"] = {"error": str(e)}
         for rcv in _consoles_for(hass, call):
             try:
                 await rcv.set_record(start)
@@ -228,6 +236,8 @@ def _register_services(hass: HomeAssistant) -> None:
                 out[co.camera_id] = await co.client.record(call.data["action"] == "start")
             except BridgeError as e:
                 out[co.camera_id] = {"error": e.body}
+            except Exception as e:  # noqa: BLE001 - bridge unreachable etc.
+                out[co.camera_id] = {"error": str(e)}
             await co.async_request_refresh()
         return out
 

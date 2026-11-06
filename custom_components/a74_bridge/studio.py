@@ -119,6 +119,9 @@ class Studio:
             except BridgeError as e:
                 results[co.camera_id] = {"ok": False, "error": e.body}
                 continue
+            except Exception as e:  # noqa: BLE001
+                results[co.camera_id] = {"ok": False, "error": str(e)}
+                continue
             path = preset_path(preset, co.camera_id)
             firmware = meta.get("firmware") or firmware
 
@@ -198,6 +201,8 @@ class Studio:
                 results[co.camera_id] = r
             except BridgeError as e:
                 results[co.camera_id] = {"error": e.body}
+            except Exception as e:  # noqa: BLE001
+                results[co.camera_id] = {"error": str(e)}
         ok = all(not r.get("rejected") and not r.get("error") for r in results.values())
         self._set_action(action="sync_parameters", source=source_id, values=values, cameras=results, ok=ok,
                          applied=sum(len(r.get("applied") or {}) for r in results.values()),
