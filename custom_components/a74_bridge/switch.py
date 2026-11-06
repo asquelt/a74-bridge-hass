@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -18,7 +19,33 @@ async def async_setup_entry(hass: HomeAssistant, entry: A74ConfigEntry, async_ad
     if is_console(entry):
         async_add_entities(console_switches(entry, entry.runtime_data))
         return
-    async_add_entities([A74RecordSwitch(entry.runtime_data)])
+    async_add_entities([A74RecordSwitch(entry.runtime_data), A74QuietSwitch(entry.runtime_data)])
+
+
+class A74QuietSwitch(CoordinatorEntity[A74Coordinator], SwitchEntity):
+    """Session quiet mode: the bridge stops all settings reads/writes (drift, clock, status reads) as if recording."""
+    _attr_has_entity_name = True
+    _attr_icon = "mdi:volume-off"
+    _attr_entity_category = EntityCategory.CONFIG
+
+    def __init__(self, co: A74Coordinator) -> None:
+        super().__init__(co)
+        self.entity_description = SwitchEntityDescription(key="quiet", translation_key="quiet")
+        self._attr_unique_id = f"{co.serial}_quiet"
+        self._attr_device_info = co.device_info
+
+    @property
+    def is_on(self) -> bool | None:
+        v = (self.coordinator.data or {}).get("bridge", {}).get("quiet")
+        return None if v is None else bool(v)
+
+    async def async_turn_on(self, **kwargs) -> None:
+        await self.coordinator.client.quiet(True)
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs) -> None:
+        await self.coordinator.client.quiet(False)
+        await self.coordinator.async_request_refresh()
 
 
 class A74RecordSwitch(CoordinatorEntity[A74Coordinator], SwitchEntity):

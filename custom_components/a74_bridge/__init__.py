@@ -243,7 +243,11 @@ def _register_services(hass: HomeAssistant) -> None:
 
         async def camera_rec(co):
             try:
+                if start:
+                    await co.client.quiet(True)   # session: no settings traffic on this camera until stop
                 r = await co.client.record(start)
+                if not start:
+                    await co.client.quiet(False)
             except BridgeError as e:
                 r = {"error": e.body}
             except Exception as e:  # noqa: BLE001

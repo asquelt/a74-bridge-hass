@@ -210,6 +210,9 @@
       },
       "console_record": {
         "name": "Record"
+      },
+      "quiet": {
+        "name": "Session quiet mode"
       }
     },
     "text": {
