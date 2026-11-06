@@ -12,6 +12,7 @@ from . import A74ConfigEntry, A74Coordinator, is_console
 BUTTONS = (
     ButtonEntityDescription(key="clock_sync", translation_key="clock_sync", icon="mdi:clock-edit-outline", entity_category=EntityCategory.CONFIG),
     ButtonEntityDescription(key="reconnect", translation_key="reconnect", icon="mdi:usb-flash-drive", entity_category=EntityCategory.CONFIG),
+    ButtonEntityDescription(key="timecode_jam", translation_key="timecode_jam", icon="mdi:timer-sync-outline"),
 )
 
 
@@ -32,8 +33,11 @@ class A74Button(CoordinatorEntity[A74Coordinator], ButtonEntity):
         self._attr_device_info = co.device_info
 
     async def async_press(self) -> None:
-        if self.entity_description.key == "clock_sync":
+        key = self.entity_description.key
+        if key == "clock_sync":
             await self.coordinator.client.clock_sync(force=True)
+        elif key == "timecode_jam":
+            await self.coordinator.client.timecode_jam(25)
         else:
             await self.coordinator.client.reconnect()
         await self.coordinator.async_request_refresh()

@@ -72,6 +72,9 @@
       },
       "console_emmc_free": {
         "name": "Internal storage free"
+      },
+      "timecode_jam": {
+        "name": "Last timecode jam"
       }
     },
     "binary_sensor": {
@@ -124,6 +127,9 @@
       },
       "reconnect": {
         "name": "Restart SDK session"
+      },
+      "timecode_jam": {
+        "name": "Jam timecode"
       }
     },
     "switch": {
@@ -203,6 +209,28 @@
         "action": {
           "name": "Action",
           "description": "start or stop"
+        },
+        "jam": {
+          "name": "Jam timecode first",
+          "description": "Jam time-of-day timecode on the cameras before starting (default on)."
+        },
+        "fps": {
+          "name": "Frame rate",
+          "description": "Timecode frame rate for the jam."
+        }
+      }
+    },
+    "timecode_jam": {
+      "name": "Jam timecode",
+      "description": "Sets free-run time-of-day timecode on the cameras from the bridge clock (NTP). Refused while recording.",
+      "fields": {
+        "device_id": {
+          "name": "Bridge",
+          "description": "a74_bridge devices; empty = all."
+        },
+        "fps": {
+          "name": "Frame rate",
+          "description": "Timecode frame rate (25 for PAL studios)."
         }
       }
     }

@@ -20,7 +20,7 @@ from .rcv import RCVClient
 from .const import (
     CONF_TOKEN, DOMAIN, EVENT_CAMERA_DISCONNECTED, EVENT_POWER_LOSS, EVENT_PRESET_APPLIED, EVENT_PRESET_FAILED,
     LOAD_TIMEOUT_S, PRESET_DIR, SCAN_INTERVAL_S, SERVICE_CLOCK_SYNC, SERVICE_PRESET_LOAD, SERVICE_PRESET_SAVE,
-    SERVICE_RECORD, SERVICE_SET_PROPERTIES, TYPE_CONSOLE,
+    SERVICE_RECORD, SERVICE_SET_PROPERTIES, SERVICE_TIMECODE_JAM, TYPE_CONSOLE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -205,9 +205,26 @@ def _register_services(hass: HomeAssistant) -> None:
                 out[co.camera_id] = {"error": e.body}
         return out
 
+    async def timecode_jam(call: ServiceCall) -> ServiceResponse:
+        out = {}
+        fps = int(call.data.get("fps", 25))
+        for co in _coordinators_for(hass, call):
+            try:
+                out[co.camera_id] = await co.client.timecode_jam(fps)
+            except BridgeError as e:
+                out[co.camera_id] = {"error": e.body}
+        return out
+
     async def record(call: ServiceCall) -> ServiceResponse:
         out = {}
         start = call.data["action"] == "start"
+        if start and call.data.get("jam", True):
+            # free-run time-of-day timecode on every camera right before the studio starts recording
+            for co in _coordinators_for(hass, call):
+                try:
+                    out[f"{co.camera_id} jam"] = await co.client.timecode_jam(int(call.data.get("fps", 25)))
+                except BridgeError as e:
+                    out[f"{co.camera_id} jam"] = {"error": e.body}
         for rcv in _consoles_for(hass, call):
             try:
                 await rcv.set_record(start)
@@ -227,4 +244,5 @@ def _register_services(hass: HomeAssistant) -> None:
     hass.services.async_register(DOMAIN, SERVICE_PRESET_LOAD, preset_load, vol.Schema({**target, vol.Required("preset"): cv.string}), SupportsResponse.OPTIONAL)
     hass.services.async_register(DOMAIN, SERVICE_CLOCK_SYNC, clock_sync, vol.Schema({**target, vol.Optional("force", default=False): cv.boolean}), SupportsResponse.OPTIONAL)
     hass.services.async_register(DOMAIN, SERVICE_SET_PROPERTIES, set_properties, vol.Schema({**target, vol.Required("properties"): dict}), SupportsResponse.OPTIONAL)
-    hass.services.async_register(DOMAIN, SERVICE_RECORD, record, vol.Schema({**target, vol.Required("action"): vol.In(["start", "stop"])}), SupportsResponse.OPTIONAL)
+    hass.services.async_register(DOMAIN, SERVICE_RECORD, record, vol.Schema({**target, vol.Required("action"): vol.In(["start", "stop"]), vol.Optional("jam", default=True): cv.boolean, vol.Optional("fps", default=25): vol.In([24, 25, 30, 50, 60])}), SupportsResponse.OPTIONAL)
+    hass.services.async_register(DOMAIN, SERVICE_TIMECODE_JAM, timecode_jam, vol.Schema({**target, vol.Optional("fps", default=25): vol.In([24, 25, 30, 50, 60])}), SupportsResponse.OPTIONAL)

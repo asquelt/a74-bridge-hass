@@ -54,3 +54,24 @@ record:
       selector:
         select:
           options: ["start", "stop"]
+    jam:
+      default: true
+      selector:
+        boolean:
+    fps:
+      default: 25
+      selector:
+        select:
+          options: ["24", "25", "30", "50", "60"]
+timecode_jam:
+  fields:
+    device_id:
+      selector:
+        device:
+          integration: a74_bridge
+          multiple: true
+    fps:
+      default: 25
+      selector:
+        select:
+          options: ["24", "25", "30", "50", "60"]

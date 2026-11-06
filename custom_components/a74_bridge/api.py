@@ -52,6 +52,12 @@ class BridgeClient:
     async def record(self, start: bool) -> dict:
         return await self._json("POST", f"/camera/record/{'start' if start else 'stop'}", data=b"")
 
+    async def timecode_jam(self, fps: int = 25) -> dict:
+        return await self._json("POST", f"/timecode/jam?fps={fps}", data=b"")
+
+    async def timecode(self) -> dict:
+        return await self._json("GET", "/timecode")
+
     async def preset_save(self) -> tuple[bytes, dict]:
         """Returns the settings file bytes and the bridge metadata (from X-Meta)."""
         async with self._session.post(self._base + "/preset/save", headers=self._headers, data=b"", timeout=aiohttp.ClientTimeout(total=60)) as r:

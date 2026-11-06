@@ -47,6 +47,8 @@ SENSORS: tuple[A74SensorDescription, ...] = (
                          state_class=SensorStateClass.MEASUREMENT, entity_category=EntityCategory.DIAGNOSTIC, value=lambda d: _g(d, "bridge", "pi_temp_c")),
     A74SensorDescription(key="disconnects", translation_key="disconnects", icon="mdi:usb-port", state_class=SensorStateClass.TOTAL_INCREASING,
                          entity_category=EntityCategory.DIAGNOSTIC, value=lambda d: _g(d, "camera", "disconnects")),
+    A74SensorDescription(key="timecode_jam", translation_key="timecode_jam", icon="mdi:timer-sync-outline", value=lambda d: _g(d, "timecode", "set_to") or "never",
+                         attrs=lambda d: {k: _g(d, "timecode", k) for k in ("at", "fps", "latency_ms", "preset_readback", "ok", "error", "run_free", "make_preset", "format")}),
     A74SensorDescription(key="bridge_uptime", translation_key="bridge_uptime", native_unit_of_measurement=UnitOfTime.SECONDS, entity_category=EntityCategory.DIAGNOSTIC,
                          entity_registry_enabled_default=False, value=lambda d: _g(d, "bridge", "uptime_s")),
 )
