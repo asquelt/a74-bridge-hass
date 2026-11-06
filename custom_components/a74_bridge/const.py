@@ -5,7 +5,7 @@ CONF_TOKEN = "token"
 DEFAULT_PORT = 8080
 SCAN_INTERVAL_S = 10
 PRESET_DIR = "/share/camera_presets"
-LOAD_TIMEOUT_S = 150
+LOAD_TIMEOUT_S = 360
 
 EVENT_PRESET_APPLIED = "a74_bridge_preset_applied"
 EVENT_PRESET_FAILED = "a74_bridge_preset_failed"
