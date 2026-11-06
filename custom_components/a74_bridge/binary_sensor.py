@@ -37,6 +37,8 @@ BINARY: tuple[A74BinaryDescription, ...] = (
                          value=lambda d: _g(d, "clock", "action") in ("ok", "corrected") and not _g(d, "clock", "power_loss_reset", default=False)),
     A74BinaryDescription(key="preset_modified", translation_key="preset_modified", icon="mdi:pencil-circle", device_class=BinarySensorDeviceClass.PROBLEM,
                          value=lambda d: _g(d, "preset", "modified")),
+    A74BinaryDescription(key="slot1_card", translation_key="slot1_card", icon="mdi:sd", device_class=BinarySensorDeviceClass.PRESENCE, entity_category=EntityCategory.DIAGNOSTIC, value=lambda d: _g(d, "camera", "slot1", "present")),
+    A74BinaryDescription(key="slot2_card", translation_key="slot2_card", icon="mdi:sd", device_class=BinarySensorDeviceClass.PRESENCE, entity_category=EntityCategory.DIAGNOSTIC, value=lambda d: _g(d, "camera", "slot2", "present")),
     A74BinaryDescription(key="overheating", translation_key="overheating", device_class=BinarySensorDeviceClass.HEAT, entity_category=EntityCategory.DIAGNOSTIC,
                          value=lambda d: (_g(d, "camera", "overheating") or 0) > 0),
 )

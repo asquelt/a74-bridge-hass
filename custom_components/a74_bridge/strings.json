@@ -87,6 +87,12 @@
       },
       "last_action": {
         "name": "Last preset action"
+      },
+      "slot1_remaining": {
+        "name": "Slot 1 remaining"
+      },
+      "slot2_remaining": {
+        "name": "Slot 2 remaining"
       }
     },
     "binary_sensor": {
@@ -134,6 +140,12 @@
       },
       "preset_modified": {
         "name": "Preset modified"
+      },
+      "slot1_card": {
+        "name": "Slot 1 card"
+      },
+      "slot2_card": {
+        "name": "Slot 2 card"
       }
     },
     "button": {
