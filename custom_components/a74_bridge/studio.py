@@ -27,6 +27,8 @@ SYNC_PARAMETERS = [
     "WhiteBalance", "ColorTemp", "PictureProfile", "CreativeLook", "Movie_File_Format", "Movie_Recording_Setting",
     "Movie_Recording_FrameRateSetting", "FocusMode", "SilentMode", "AudioRecording", "AudioInputMasterLevel",
 ]
+# bound to physical dials / only valid in some modes on the A7 IV: a rejection here is expected, not a failure
+SYNC_OPTIONAL = {"ExposureProgramMode", "ExposureBiasCompensation", "ColorTemp"}
 
 
 def safe_name(name: str) -> str:
@@ -189,12 +191,18 @@ class Studio:
         results = {}
         for co in targets:
             try:
-                results[co.camera_id] = await co.client.set_properties(values)
+                r = await co.client.set_properties(values)
+                rej = r.get("rejected") or {}
+                r["skipped"] = {k: v for k, v in rej.items() if k in SYNC_OPTIONAL}
+                r["rejected"] = {k: v for k, v in rej.items() if k not in SYNC_OPTIONAL}
+                results[co.camera_id] = r
             except BridgeError as e:
                 results[co.camera_id] = {"error": e.body}
-        self._set_action(action="sync_parameters", source=source_id, values=values, cameras=results,
-                         ok=all(not r.get("rejected") and not r.get("error") for r in results.values()))
-        return {"source": source_id, "values": values, "cameras": results}
+        ok = all(not r.get("rejected") and not r.get("error") for r in results.values())
+        self._set_action(action="sync_parameters", source=source_id, values=values, cameras=results, ok=ok,
+                         applied=sum(len(r.get("applied") or {}) for r in results.values()),
+                         skipped=sorted({k for r in results.values() for k in (r.get("skipped") or {})}))
+        return {"source": source_id, "values": values, "cameras": results, "ok": ok}
 
     async def sync_full(self, source_id: str, targets=None) -> dict:
         cos = self.coordinators()
