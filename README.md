@@ -19,6 +19,8 @@ settings-file tooling and the design notes live in a separate, private repositor
 
 Releases: every `vX.Y.Z` tag pushed to the source repository is mirrored here and turned into a GitHub Release by the `release` workflow.
 
+Brand icon/logo ship inside the integration (`custom_components/a74_bridge/brand/`, Home Assistant ≥ 2026.3 serves them locally).
+
 Without HACS: copy `custom_components/a74_bridge` into your `config/custom_components/` (see `install.sh`).
 
 ## What you get per camera

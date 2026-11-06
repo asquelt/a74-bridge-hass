@@ -1,8 +1,6 @@
-# Brand assets for Home Assistant
+# Brand assets
 
-Home Assistant shows integration icons from the central `home-assistant/brands` repository; custom integrations
-cannot ship their own. To get rid of "icon not available":
-
-1. Fork https://github.com/home-assistant/brands and add this folder as `custom_integrations/a74_bridge/`
-   (files: `icon.png` 256×256, `icon@2x.png` 512×512, `logo.png`, `logo@2x.png`, transparent PNG).
-2. Open a pull request; after it is merged the icon appears in every HA instance within a day (CDN cache).
+Since Home Assistant 2026.3 custom integrations ship their own brand images in `custom_components/<domain>/brand/`
+(icon.png, icon@2x.png, logo.png, logo@2x.png, optional dark_ variants); the central home-assistant/brands repository
+no longer accepts custom integrations. The copies here are the sources; the live files are in
+`custom_components/a74_bridge/brand/`.
