@@ -55,6 +55,9 @@ class BridgeClient:
     async def timecode_jam(self, fps: int = 25) -> dict:
         return await self._json("POST", f"/timecode/jam?fps={fps}", data=b"")
 
+    async def preset_drift(self) -> dict:
+        return await self._json("GET", "/preset/drift")
+
     async def timecode(self) -> dict:
         return await self._json("GET", "/timecode")
 

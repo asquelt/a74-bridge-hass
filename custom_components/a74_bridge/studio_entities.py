@@ -102,6 +102,8 @@ class StudioButton(StudioEntity, ButtonEntity):
             await self.studio.sync_full(self.source_camera)
         elif k == "refresh":
             await self.studio.refresh()
+        elif k == "refresh_all":
+            await self.studio.refresh_all()
 
 
 class LastActionSensor(StudioEntity, SensorEntity):
@@ -132,4 +134,5 @@ def studio_buttons(entry, studio): return [
     StudioButton(entry, studio, "sync_parameters", "mdi:camera-switch"),
     StudioButton(entry, studio, "sync_full", "mdi:content-copy"),
     StudioButton(entry, studio, "refresh", "mdi:refresh"),
+    StudioButton(entry, studio, "refresh_all", "mdi:refresh-circle"),
 ]

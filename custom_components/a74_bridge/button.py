@@ -14,6 +14,7 @@ BUTTONS = (
     ButtonEntityDescription(key="clock_sync", translation_key="clock_sync", icon="mdi:clock-edit-outline", entity_category=EntityCategory.CONFIG),
     ButtonEntityDescription(key="reconnect", translation_key="reconnect", icon="mdi:usb-flash-drive", entity_category=EntityCategory.CONFIG),
     ButtonEntityDescription(key="timecode_jam", translation_key="timecode_jam", icon="mdi:timer-sync-outline"),
+    ButtonEntityDescription(key="drift_check", translation_key="drift_check", icon="mdi:file-compare", entity_category=EntityCategory.CONFIG),
 )
 
 
@@ -42,6 +43,8 @@ class A74Button(CoordinatorEntity[A74Coordinator], ButtonEntity):
             await self.coordinator.client.clock_sync(force=True)
         elif key == "timecode_jam":
             await self.coordinator.client.timecode_jam(25)
+        elif key == "drift_check":
+            await self.coordinator.client.preset_drift()
         else:
             await self.coordinator.client.reconnect()
         await self.coordinator.async_request_refresh()

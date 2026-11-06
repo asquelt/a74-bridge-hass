@@ -196,6 +196,12 @@
       },
       "refresh": {
         "name": "Refresh preset list"
+      },
+      "drift_check": {
+        "name": "Check preset drift"
+      },
+      "refresh_all": {
+        "name": "Refresh all cameras"
       }
     },
     "switch": {

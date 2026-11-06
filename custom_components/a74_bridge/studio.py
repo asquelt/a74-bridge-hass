@@ -188,6 +188,22 @@ class Studio:
         self._set_action(action="load", preset=preset, cameras=results, ok=all(j.get("state") == "verified" for j in results.values()))
         return {"preset": preset, "cameras": results}
 
+    async def refresh_all(self) -> dict:
+        """Drift check (full property read) on every idle camera, then a status refresh; the periodic check runs only every 15 min."""
+        out = {}
+        for co in self.coordinators():
+            try:
+                r = await co.client.preset_drift()
+                out[co.camera_id] = {"modified": r.get("modified"), "changes": r.get("changes")}
+            except BridgeError as e:
+                out[co.camera_id] = {"error": e.body}
+            except Exception as e:  # noqa: BLE001
+                out[co.camera_id] = {"error": str(e)}
+            await co.async_request_refresh()
+        await self.refresh()
+        self._set_action(action="refresh_all", cameras=out, ok=all("error" not in v for v in out.values()))
+        return out
+
     async def delete(self, preset: str) -> None:
         p = os.path.join(PRESET_DIR, safe_name(preset))
         if os.path.isdir(p):
