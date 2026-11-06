@@ -169,13 +169,19 @@ class Studio:
                 if not os.path.exists(path):
                     return co.camera_id, {"state": "failed", "error": f"no file for {co.camera_id} in preset {preset}"}
                 data = await self.hass.async_add_executor_job(lambda p=path: open(p, "rb").read())
-                try:
-                    started = await co.client.preset_load(data, preset)
-                    job = await co.client.wait_job(started["job_id"], LOAD_TIMEOUT_S)
-                except BridgeError as e:
-                    job = {"state": "failed", "error": e.body}
-                except Exception as e:  # noqa: BLE001
-                    job = {"state": "failed", "error": str(e)}
+                job = {}
+                for attempt in range(2):   # one retry: the camera sometimes accepts the file without rebooting right after a previous reboot
+                    try:
+                        started = await co.client.preset_load(data, preset)
+                        job = await co.client.wait_job(started["job_id"], LOAD_TIMEOUT_S)
+                    except BridgeError as e:
+                        job = {"state": "failed", "error": e.body}
+                    except Exception as e:  # noqa: BLE001
+                        job = {"state": "failed", "error": str(e)}
+                    if job.get("state") == "verified" or "did not reboot" not in str(job.get("error", "")):
+                        break
+                    job["retried"] = True
+                    await asyncio.sleep(45)
                 self.hass.bus.async_fire(EVENT_PRESET_APPLIED if job.get("state") == "verified" else EVENT_PRESET_FAILED,
                                          {"camera_id": co.camera_id, "serial": co.serial, "preset": preset, "job": job})
                 await co.async_request_refresh()
