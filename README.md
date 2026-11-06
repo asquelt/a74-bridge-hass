@@ -13,6 +13,8 @@ settings-file tooling and the design notes live in a separate, private repositor
 3. Settings → Devices & services → *Add integration* → **A74 Bridge** → host of the bridge, port (8080) and the token
    from `/etc/a74-bridge/bridge.env` on the Pi.
 
+Releases: every `vX.Y.Z` tag pushed to the source repository is mirrored here and turned into a GitHub Release by the `release` workflow.
+
 Without HACS: copy `custom_components/a74_bridge` into your `config/custom_components/` (see `install.sh`).
 
 ## What you get per camera
