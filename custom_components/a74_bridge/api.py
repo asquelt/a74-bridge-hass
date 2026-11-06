@@ -58,9 +58,9 @@ class BridgeClient:
     async def timecode(self) -> dict:
         return await self._json("GET", "/timecode")
 
-    async def preset_save(self) -> tuple[bytes, dict]:
-        """Returns the settings file bytes and the bridge metadata (from X-Meta)."""
-        async with self._session.post(self._base + "/preset/save", headers=self._headers, data=b"", timeout=aiohttp.ClientTimeout(total=60)) as r:
+    async def preset_save(self, name: str | None = None) -> tuple[bytes, dict]:
+        """Returns the settings file bytes and the bridge metadata (from X-Meta). `name` marks the preset active on the bridge."""
+        async with self._session.post(self._base + "/preset/save", headers=self._headers, data=b"", params={"name": name} if name else None, timeout=aiohttp.ClientTimeout(total=60)) as r:
             if r.status >= 400:
                 raise BridgeError(r.status, await r.json(content_type=None))
             data = await r.read()

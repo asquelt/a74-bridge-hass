@@ -115,7 +115,7 @@ class Studio:
         results, firmware = {}, None
         for co in cos:
             try:
-                data, meta = await co.client.preset_save()
+                data, meta = await co.client.preset_save(preset)
             except BridgeError as e:
                 results[co.camera_id] = {"ok": False, "error": e.body}
                 continue
@@ -139,6 +139,8 @@ class Studio:
             await self.hass.async_add_executor_job(lambda: json.dump({"created_at": datetime.now().isoformat(timespec="seconds"), "firmware": firmware, "note": note, "cameras": sorted(results)}, open(pm, "w", encoding="utf-8"), indent=1))
         self.selected = preset
         await self.refresh()
+        for co in cos:
+            await co.async_request_refresh()
         self._set_action(action="save", preset=preset, cameras=results, ok=all(r.get("ok") for r in results.values()))
         return {"preset": preset, "cameras": results}
 
