@@ -9,7 +9,7 @@ from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TYPE
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import BridgeClient, BridgeError
-from .const import CONF_SOURCE_CAMERA, CONF_TOKEN, DEFAULT_PORT, DEFAULT_SOURCE_CAMERA, DOMAIN, TYPE_BRIDGE, TYPE_CONSOLE, TYPE_STUDIO
+from .const import CONF_GUARD_ENTITY, CONF_SOURCE_CAMERA, CONF_TOKEN, DEFAULT_GUARD_ENTITY, DEFAULT_PORT, DEFAULT_SOURCE_CAMERA, DOMAIN, TYPE_BRIDGE, TYPE_CONSOLE, TYPE_STUDIO
 from .rcv import RCV_PORT, RCVClient
 
 BRIDGE_SCHEMA = vol.Schema({
@@ -91,4 +91,5 @@ class StudioOptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(data=user_input)
         cur = self.config_entry.options.get(CONF_SOURCE_CAMERA) or self.config_entry.data.get(CONF_SOURCE_CAMERA) or DEFAULT_SOURCE_CAMERA
-        return self.async_show_form(step_id="init", data_schema=vol.Schema({vol.Required(CONF_SOURCE_CAMERA, default=cur): str}))
+        guard = self.config_entry.options.get(CONF_GUARD_ENTITY, self.config_entry.data.get(CONF_GUARD_ENTITY, DEFAULT_GUARD_ENTITY))
+        return self.async_show_form(step_id="init", data_schema=vol.Schema({vol.Required(CONF_SOURCE_CAMERA, default=cur): str, vol.Optional(CONF_GUARD_ENTITY, default=guard or ""): str}))

@@ -70,7 +70,7 @@ SENSORS: tuple[A74SensorDescription, ...] = (
                          attrs=lambda d: _slot_attrs(d, "slot1")),
     A74SensorDescription(key="slot2_remaining", translation_key="slot2_remaining", icon="mdi:sd", value=lambda d: _hms(_g(d, "camera", "slot2", "remaining_s"), _g(d, "camera", "slot2", "status")),
                          attrs=lambda d: _slot_attrs(d, "slot2")),
-    A74SensorDescription(key="exposure_mode", translation_key="exposure_mode", icon="mdi:camera-iris", value=lambda d: _g(d, "camera", "exposure", "mode"), attrs=lambda d: {"stale": _g(d, "camera", "cache_stale")}),
+    A74SensorDescription(key="exposure_mode", translation_key="exposure_mode", icon="mdi:camera-control", value=lambda d: _g(d, "camera", "exposure", "mode"), attrs=lambda d: {"stale": _g(d, "camera", "cache_stale")}),
     A74SensorDescription(key="shutter", translation_key="shutter", icon="mdi:camera-timer", value=lambda d: _g(d, "camera", "exposure", "shutter")),
     A74SensorDescription(key="aperture", translation_key="aperture", icon="mdi:camera-iris", value=lambda d: _g(d, "camera", "exposure", "aperture")),
     A74SensorDescription(key="iso", translation_key="iso", icon="mdi:brightness-6", value=lambda d: _g(d, "camera", "exposure", "iso")),

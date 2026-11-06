@@ -17,7 +17,7 @@ from .api import BridgeClient, BridgeError
 from .rcv import RCVClient
 from .studio import Studio
 from .const import (
-    CONF_TOKEN, DOMAIN, EVENT_CAMERA_DISCONNECTED, EVENT_POWER_LOSS, EVENT_PRESET_APPLIED, EVENT_PRESET_FAILED,
+    CONF_GUARD_ENTITY, CONF_TOKEN, DEFAULT_GUARD_ENTITY, DOMAIN, EVENT_CAMERA_DISCONNECTED, EVENT_POWER_LOSS, EVENT_PRESET_APPLIED, EVENT_PRESET_FAILED,
     LOAD_TIMEOUT_S, PRESET_DIR, SCAN_INTERVAL_S, SERVICE_CLOCK_SYNC, SERVICE_PRESET_LOAD, SERVICE_PRESET_SAVE,
     SERVICE_PRESET_DELETE, SERVICE_PRESET_LIST, SERVICE_RECORD, SERVICE_SET_PROPERTIES, SERVICE_SYNC_FROM, SERVICE_TIMECODE_JAM, TYPE_CONSOLE, TYPE_STUDIO,
 )
@@ -83,6 +83,7 @@ class A74Coordinator(DataUpdateCoordinator[dict]):
 async def async_setup_entry(hass: HomeAssistant, entry: A74ConfigEntry) -> bool:
     if is_studio(entry):
         studio = get_studio(hass)
+        studio.guard_entity = entry.options.get(CONF_GUARD_ENTITY, entry.data.get(CONF_GUARD_ENTITY, DEFAULT_GUARD_ENTITY)) or None
         await studio.refresh()
         entry.runtime_data = studio
         entry.async_on_unload(entry.add_update_listener(_options_updated))
@@ -106,7 +107,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: A74ConfigEntry) -> bool:
 
 
 async def _options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    get_studio(hass).notify()
+    st = get_studio(hass)
+    st.guard_entity = entry.options.get(CONF_GUARD_ENTITY, entry.data.get(CONF_GUARD_ENTITY, DEFAULT_GUARD_ENTITY)) or None
+    st.notify()
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: A74ConfigEntry) -> bool:
@@ -214,31 +217,42 @@ def _register_services(hass: HomeAssistant) -> None:
         return out
 
     async def record(call: ServiceCall) -> ServiceResponse:
+        """Start/stop on every camera and console at the same time (gather), so the studio rolls together."""
+        import asyncio  # noqa: PLC0415
         out = {}
         start = call.data["action"] == "start"
+        cos = _coordinators_for(hass, call)
+        consoles = _consoles_for(hass, call)
         if start and call.data.get("jam", True):
-            # free-run time-of-day timecode on every camera right before the studio starts recording
-            for co in _coordinators_for(hass, call):
+            async def jam(co):
                 try:
-                    out[f"{co.camera_id} jam"] = await co.client.timecode_jam(int(call.data.get("fps", 25)))
+                    return f"{co.camera_id} jam", await co.client.timecode_jam(int(call.data.get("fps", 25)))
                 except BridgeError as e:
-                    out[f"{co.camera_id} jam"] = {"error": e.body}
+                    return f"{co.camera_id} jam", {"error": e.body}
                 except Exception as e:  # noqa: BLE001
-                    out[f"{co.camera_id} jam"] = {"error": str(e)}
-        for rcv in _consoles_for(hass, call):
+                    return f"{co.camera_id} jam", {"error": str(e)}
+            for k, v in await asyncio.gather(*(jam(co) for co in cos)):
+                out[k] = v
+
+        async def console_rec(rcv):
             try:
                 await rcv.set_record(start)
-                out[f"console {rcv.host}"] = {"sent": True}
+                return f"console {rcv.host}", {"sent": True}
             except Exception as e:  # noqa: BLE001
-                out[f"console {rcv.host}"] = {"error": str(e)}
-        for co in _coordinators_for(hass, call):
+                return f"console {rcv.host}", {"error": str(e)}
+
+        async def camera_rec(co):
             try:
-                out[co.camera_id] = await co.client.record(call.data["action"] == "start")
+                r = await co.client.record(start)
             except BridgeError as e:
-                out[co.camera_id] = {"error": e.body}
-            except Exception as e:  # noqa: BLE001 - bridge unreachable etc.
-                out[co.camera_id] = {"error": str(e)}
+                r = {"error": e.body}
+            except Exception as e:  # noqa: BLE001
+                r = {"error": str(e)}
             await co.async_request_refresh()
+            return co.camera_id, r
+
+        for k, v in await asyncio.gather(*(console_rec(r) for r in consoles), *(camera_rec(co) for co in cos)):
+            out[k] = v
         return out
 
     target = {vol.Optional("device_id"): vol.Any(cv.string, [cv.string])}

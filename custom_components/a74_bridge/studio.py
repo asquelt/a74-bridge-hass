@@ -104,12 +104,21 @@ class Studio:
     def _recording(self, cos) -> list[str]:
         return [co.camera_id for co in cos if (co.data or {}).get("camera", {}).get("recording")]
 
+    guard_entity: str | None = None   # e.g. input_boolean.tryb_nagrywania: while on, no settings-file traffic (it blanks HDMI)
+
+    def _guard(self, what: str) -> None:
+        if self.guard_entity:
+            st = self.hass.states.get(self.guard_entity)
+            if st and st.state == "on":
+                raise HomeAssistantError(f"{what} refused: {self.guard_entity} is on (studio session in progress; saving or loading settings blanks the HDMI output)")
+
     def _set_action(self, **kw) -> None:
         self.last_action = {"at": datetime.now().isoformat(timespec="seconds"), **kw}
         self.notify()
 
     # ---- operations ----
     async def save(self, name: str | None, cos=None, note: str | None = None) -> dict:
+        self._guard("preset save")
         cos = cos or self.coordinators()
         preset = safe_name(name) if name else default_name()
         results, firmware = {}, None
@@ -147,6 +156,7 @@ class Studio:
     async def load(self, preset: str, cos=None) -> dict:
         cos = cos or self.coordinators()
         preset = safe_name(preset)
+        self._guard("preset load")
         rec = self._recording(cos)
         if rec:
             raise HomeAssistantError(f"recording on {', '.join(rec)}; preset load refused")
@@ -217,6 +227,7 @@ class Studio:
         if not src:
             raise HomeAssistantError(f"source camera {source_id} not found")
         targets = targets or [co for co in cos if co.camera_id != source_id]
+        self._guard("full sync")
         rec = self._recording(cos)
         if rec:
             raise HomeAssistantError(f"recording on {', '.join(rec)}; full sync refused")

@@ -352,7 +352,8 @@
       "init": {
         "title": "Studio presets",
         "data": {
-          "source_camera": "Source camera for sync (bridge name)"
+          "source_camera": "Source camera for sync (bridge name)",
+          "guard_entity": "Session guard entity (while on: no preset save/load/sync, they blank the HDMI output)"
         }
       }
     }
