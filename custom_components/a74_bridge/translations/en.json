@@ -93,6 +93,27 @@
       },
       "slot2_remaining": {
         "name": "Slot 2 remaining"
+      },
+      "exposure_mode": {
+        "name": "Exposure mode"
+      },
+      "shutter": {
+        "name": "Shutter"
+      },
+      "aperture": {
+        "name": "Aperture"
+      },
+      "iso": {
+        "name": "ISO"
+      },
+      "white_balance": {
+        "name": "White balance"
+      },
+      "lens": {
+        "name": "Lens"
+      },
+      "format": {
+        "name": "Recording format"
       }
     },
     "binary_sensor": {
