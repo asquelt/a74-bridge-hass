@@ -73,7 +73,7 @@ SENSORS: tuple[A74SensorDescription, ...] = (
     A74SensorDescription(key="exposure_mode", translation_key="exposure_mode", icon="mdi:camera-iris", value=lambda d: _g(d, "camera", "exposure", "mode"), attrs=lambda d: {"stale": _g(d, "camera", "cache_stale")}),
     A74SensorDescription(key="shutter", translation_key="shutter", icon="mdi:camera-timer", value=lambda d: _g(d, "camera", "exposure", "shutter")),
     A74SensorDescription(key="aperture", translation_key="aperture", icon="mdi:camera-iris", value=lambda d: _g(d, "camera", "exposure", "aperture")),
-    A74SensorDescription(key="iso", translation_key="iso", icon="mdi:iso", value=lambda d: _g(d, "camera", "exposure", "iso")),
+    A74SensorDescription(key="iso", translation_key="iso", icon="mdi:brightness-6", value=lambda d: _g(d, "camera", "exposure", "iso")),
     A74SensorDescription(key="white_balance", translation_key="white_balance", icon="mdi:white-balance-sunny", value=lambda d: _g(d, "camera", "exposure", "white_balance")),
     A74SensorDescription(key="lens", translation_key="lens", icon="mdi:camera-outline", value=lambda d: _g(d, "camera", "exposure", "lens")),
     A74SensorDescription(key="format", translation_key="format", icon="mdi:movie-open-settings", entity_category=EntityCategory.DIAGNOSTIC,
