@@ -1,0 +1,77 @@
+preset_save:
+  name: Zapisz preset
+  description: Pobiera plik ustawień z kamery (po walidacji na mostku) i zapisuje w /share/camera_presets/<preset>/<kamera>.DAT.
+  fields:
+    device_id:
+      name: Mostek
+      description: Urządzenia a74_bridge; puste = wszystkie.
+      selector:
+        device:
+          integration: a74_bridge
+          multiple: true
+    preset:
+      name: Nazwa presetu
+      required: true
+      example: klient-abc
+      selector:
+        text:
+preset_load:
+  name: Wgraj preset
+  description: Wgrywa plik /share/camera_presets/<preset>/<kamera>.DAT do kamery. Kamera restartuje się (HDMI znika na ~11 s). Czeka na verified.
+  fields:
+    device_id:
+      name: Mostek
+      selector:
+        device:
+          integration: a74_bridge
+          multiple: true
+    preset:
+      name: Nazwa presetu
+      required: true
+      selector:
+        text:
+clock_sync:
+  name: Synchronizuj zegar kamery
+  fields:
+    device_id:
+      name: Mostek
+      selector:
+        device:
+          integration: a74_bridge
+          multiple: true
+    force:
+      name: Wymuś
+      description: Koryguj nawet bez synchronizacji NTP na Pi.
+      selector:
+        boolean:
+set_properties:
+  name: Ustaw parametry kamery
+  description: Surowe wartości SDK, np. {"iso": 800, "aperture": 400}.
+  fields:
+    device_id:
+      name: Mostek
+      selector:
+        device:
+          integration: a74_bridge
+          multiple: true
+    properties:
+      name: Parametry
+      required: true
+      selector:
+        object:
+record:
+  name: Nagrywanie
+  description: Tylko do użycia ręcznego z panelu; automatyzacje nie startują nagrywania.
+  fields:
+    device_id:
+      name: Mostek
+      selector:
+        device:
+          integration: a74_bridge
+          multiple: true
+    action:
+      name: Akcja
+      required: true
+      selector:
+        select:
+          options: ["start", "stop"]
