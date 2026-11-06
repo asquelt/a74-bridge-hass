@@ -4,7 +4,11 @@
       "user": {
         "title": "Mostek A74",
         "description": "Adres mostka Raspberry Pi i token z /etc/a74-bridge/bridge.env.",
-        "data": { "host": "Host", "port": "Port", "token": "Token" }
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "token": "Token"
+        }
       }
     },
     "error": {
@@ -12,32 +16,67 @@
       "invalid_auth": "Zły token",
       "no_camera": "Mostek odpowiada, ale nie zgłasza kamery"
     },
-    "abort": { "already_configured": "Ten mostek jest już dodany" }
+    "abort": {
+      "already_configured": "Ten mostek jest już dodany"
+    }
   },
   "entity": {
     "sensor": {
-      "usb_mode": { "name": "Tryb USB" },
-      "firmware": { "name": "Firmware kamery" },
-      "battery_level": { "name": "Poziom baterii" },
-      "power_source": { "name": "Zasilanie kamery" },
-      "active_preset": { "name": "Aktywny preset" },
-      "last_job": { "name": "Ostatni load" },
-      "clock_delta": { "name": "Odchyłka zegara" },
-      "pi_temp": { "name": "Temperatura Pi" },
-      "disconnects": { "name": "Rozłączenia USB" },
-      "bridge_uptime": { "name": "Uptime mostka" }
+      "usb_mode": {
+        "name": "Tryb USB"
+      },
+      "firmware": {
+        "name": "Firmware kamery"
+      },
+      "active_preset": {
+        "name": "Aktywny preset"
+      },
+      "last_job": {
+        "name": "Ostatni load"
+      },
+      "clock_delta": {
+        "name": "Odchyłka zegara"
+      },
+      "pi_temp": {
+        "name": "Temperatura Pi"
+      },
+      "disconnects": {
+        "name": "Rozłączenia USB"
+      },
+      "bridge_uptime": {
+        "name": "Uptime mostka"
+      },
+      "battery_percent": {
+        "name": "Bateria kamery"
+      }
     },
     "binary_sensor": {
-      "connected": { "name": "Sesja SDK" },
-      "recording": { "name": "Nagrywanie" },
-      "usb_remote_shooting": { "name": "USB Remote Shooting" },
-      "load_in_progress": { "name": "Wgrywanie presetu" },
-      "clock_ok": { "name": "Zegar OK" },
-      "overheating": { "name": "Przegrzanie" }
+      "connected": {
+        "name": "Sesja SDK"
+      },
+      "recording": {
+        "name": "Nagrywanie"
+      },
+      "usb_remote_shooting": {
+        "name": "USB Remote Shooting"
+      },
+      "load_in_progress": {
+        "name": "Wgrywanie presetu"
+      },
+      "clock_ok": {
+        "name": "Zegar OK"
+      },
+      "overheating": {
+        "name": "Przegrzanie"
+      }
     },
     "button": {
-      "clock_sync": { "name": "Synchronizuj zegar" },
-      "reconnect": { "name": "Wznów sesję SDK" }
+      "clock_sync": {
+        "name": "Synchronizuj zegar"
+      },
+      "reconnect": {
+        "name": "Wznów sesję SDK"
+      }
     }
   }
 }

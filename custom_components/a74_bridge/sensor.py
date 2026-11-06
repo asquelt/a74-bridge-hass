@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription, SensorStateClass
-from homeassistant.const import EntityCategory, UnitOfTemperature, UnitOfTime
+from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfTemperature, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -32,8 +32,9 @@ def _g(d: dict, *path: str, default=None):
 SENSORS: tuple[A74SensorDescription, ...] = (
     A74SensorDescription(key="usb_mode", translation_key="usb_mode", icon="mdi:usb", value=lambda d: _g(d, "usb", "mode"), attrs=lambda d: {"pid": _g(d, "usb", "pid")}),
     A74SensorDescription(key="firmware", translation_key="firmware", icon="mdi:chip", entity_category=EntityCategory.DIAGNOSTIC, value=lambda d: _g(d, "camera", "firmware")),
-    A74SensorDescription(key="battery_level", translation_key="battery_level", icon="mdi:battery", entity_category=EntityCategory.DIAGNOSTIC, value=lambda d: _g(d, "camera", "battery_level")),
-    A74SensorDescription(key="power_source", translation_key="power_source", icon="mdi:power-plug", entity_category=EntityCategory.DIAGNOSTIC, value=lambda d: _g(d, "camera", "power_source")),
+    A74SensorDescription(key="battery_percent", translation_key="battery_percent", device_class=SensorDeviceClass.BATTERY, native_unit_of_measurement=PERCENTAGE,
+                         state_class=SensorStateClass.MEASUREMENT, entity_category=EntityCategory.DIAGNOSTIC, value=lambda d: _g(d, "camera", "battery_percent"),
+                         attrs=lambda d: {"level_enum": _g(d, "camera", "battery_level")}),
     A74SensorDescription(key="active_preset", translation_key="active_preset", icon="mdi:camera-iris", value=lambda d: _g(d, "preset", "active") or "none",
                          attrs=lambda d: {"sha256": _g(d, "preset", "sha256"), "loaded_at": _g(d, "preset", "loaded_at")}),
     A74SensorDescription(key="last_job", translation_key="last_job", icon="mdi:progress-upload", value=lambda d: _g(d, "last_job", "state") or "none",
