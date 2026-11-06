@@ -1,5 +1,5 @@
 # Creates a GitHub Release for every v* tag that arrives through the Gitea push mirror,
-# so HACS sees proper versions instead of commit hashes.
+# so HACS sees proper versions and shows the changelog (release notes) in its update dialog.
 name: release
 on:
   push:
@@ -11,12 +11,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Check manifest version matches the tag
         run: |
           TAG="${GITHUB_REF_NAME#v}"
           MAN=$(python3 -c "import json;print(json.load(open('custom_components/a74_bridge/manifest.json'))['version'])")
           test "$TAG" = "$MAN" || { echo "tag $TAG != manifest $MAN"; exit 1; }
+      - name: Build changelog from commits since the previous tag
+        run: |
+          PREV=$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)
+          RANGE="${PREV:+$PREV..}${GITHUB_REF_NAME}"
+          {
+            echo "## Zmiany w ${GITHUB_REF_NAME#v}"
+            echo
+            git log --no-merges --pretty='- %s' "$RANGE" | sed -E 's/^- [0-9]+\.[0-9]+\.[0-9]+: /- /'
+            echo
+            [ -n "$PREV" ] && echo "Pełna lista: https://github.com/${GITHUB_REPOSITORY}/compare/${PREV}...${GITHUB_REF_NAME}"
+          } > notes.md
+          cat notes.md
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "${GITHUB_REF_NAME#v}" --notes-file notes.md
