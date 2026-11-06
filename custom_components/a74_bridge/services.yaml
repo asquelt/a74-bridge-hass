@@ -6,10 +6,36 @@ preset_save:
           integration: a74_bridge
           multiple: true
     preset:
-      required: true
       example: client-abc
       selector:
         text:
+    note:
+      selector:
+        text:
+preset_list: {}
+preset_delete:
+  fields:
+    preset:
+      required: true
+      selector:
+        text:
+sync_from:
+  fields:
+    device_id:
+      selector:
+        device:
+          integration: a74_bridge
+          multiple: true
+    source:
+      required: true
+      default: a74-bridge-1
+      selector:
+        text:
+    mode:
+      default: parameters
+      selector:
+        select:
+          options: ["parameters", "full"]
 preset_load:
   fields:
     device_id:

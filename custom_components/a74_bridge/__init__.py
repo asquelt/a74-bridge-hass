@@ -1,9 +1,7 @@
 """A74 Bridge: one Sony A7 IV behind a Raspberry Pi bridge, polled over REST."""
 from __future__ import annotations
 
-import json
 import logging
-import os
 from datetime import timedelta
 
 import voluptuous as vol
@@ -17,19 +15,28 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .api import BridgeClient, BridgeError
 from .rcv import RCVClient
+from .studio import Studio
 from .const import (
     CONF_TOKEN, DOMAIN, EVENT_CAMERA_DISCONNECTED, EVENT_POWER_LOSS, EVENT_PRESET_APPLIED, EVENT_PRESET_FAILED,
     LOAD_TIMEOUT_S, PRESET_DIR, SCAN_INTERVAL_S, SERVICE_CLOCK_SYNC, SERVICE_PRESET_LOAD, SERVICE_PRESET_SAVE,
-    SERVICE_RECORD, SERVICE_SET_PROPERTIES, SERVICE_TIMECODE_JAM, TYPE_CONSOLE,
+    SERVICE_PRESET_DELETE, SERVICE_PRESET_LIST, SERVICE_RECORD, SERVICE_SET_PROPERTIES, SERVICE_SYNC_FROM, SERVICE_TIMECODE_JAM, TYPE_CONSOLE, TYPE_STUDIO,
 )
 
 _LOGGER = logging.getLogger(__name__)
-PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.BUTTON, Platform.SWITCH]
-type A74ConfigEntry = ConfigEntry[A74Coordinator | RCVClient]
+PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.BUTTON, Platform.SWITCH, Platform.TEXT, Platform.SELECT]
+type A74ConfigEntry = ConfigEntry[A74Coordinator | RCVClient | Studio]
 
 
 def is_console(entry: ConfigEntry) -> bool:
     return entry.data.get(CONF_TYPE) == TYPE_CONSOLE
+
+
+def is_studio(entry: ConfigEntry) -> bool:
+    return entry.data.get(CONF_TYPE) == TYPE_STUDIO
+
+
+def get_studio(hass: HomeAssistant) -> Studio:
+    return hass.data.setdefault(DOMAIN, {}).setdefault("studio", Studio(hass))
 
 
 class A74Coordinator(DataUpdateCoordinator[dict]):
@@ -74,6 +81,14 @@ class A74Coordinator(DataUpdateCoordinator[dict]):
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: A74ConfigEntry) -> bool:
+    if is_studio(entry):
+        studio = get_studio(hass)
+        await studio.refresh()
+        entry.runtime_data = studio
+        entry.async_on_unload(entry.add_update_listener(_options_updated))
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+        _register_services(hass)
+        return True
     if is_console(entry):
         rcv = RCVClient(entry.data[CONF_HOST], entry.data[CONF_PORT])
         rcv.start()
@@ -90,6 +105,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: A74ConfigEntry) -> bool:
     return True
 
 
+async def _options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    get_studio(hass).notify()
+
+
 async def async_unload_entry(hass: HomeAssistant, entry: A74ConfigEntry) -> bool:
     ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if ok and is_console(entry):
@@ -103,7 +122,7 @@ def _coordinators_for(hass: HomeAssistant, call: ServiceCall) -> list[A74Coordin
     device_ids = call.data.get("device_id") or []
     if isinstance(device_ids, str):
         device_ids = [device_ids]
-    entries = [e for e in hass.config_entries.async_entries(DOMAIN) if e.state is ConfigEntryState.LOADED and not is_console(e)]
+    entries = [e for e in hass.config_entries.async_entries(DOMAIN) if e.state is ConfigEntryState.LOADED and not is_console(e) and not is_studio(e)]
     if not device_ids:
         return [e.runtime_data for e in entries]
     reg = dr.async_get(hass)
@@ -134,58 +153,31 @@ def _consoles_for(hass: HomeAssistant, call: ServiceCall) -> list[RCVClient]:
     return out
 
 
-def _preset_path(preset: str, camera_id: str) -> str:
-    safe = "".join(c for c in preset if c.isalnum() or c in "-_.")
-    if not safe:
-        raise HomeAssistantError("preset name must contain letters or digits")
-    return os.path.join(PRESET_DIR, safe, f"{camera_id}.DAT")
-
-
 def _register_services(hass: HomeAssistant) -> None:
     if hass.services.has_service(DOMAIN, SERVICE_PRESET_SAVE):
         return
 
     async def preset_save(call: ServiceCall) -> ServiceResponse:
-        preset = call.data["preset"]
-        results = {}
-        for co in _coordinators_for(hass, call):
-            try:
-                data, meta = await co.client.preset_save()
-            except BridgeError as e:
-                results[co.camera_id] = {"ok": False, "error": e.body}
-                continue
-            path = _preset_path(preset, co.camera_id)
-
-            def _write() -> None:
-                os.makedirs(os.path.dirname(path), exist_ok=True)
-                with open(path, "wb") as f:
-                    f.write(data)
-                with open(path + ".json", "w", encoding="utf-8") as f:
-                    json.dump(meta, f, indent=1)
-
-            await hass.async_add_executor_job(_write)
-            results[co.camera_id] = {"ok": True, "path": path, "sha256": meta.get("sha256"), "firmware": meta.get("firmware"), "size": len(data)}
-        return {"preset": preset, "cameras": results}
+        return await get_studio(hass).save(call.data.get("preset") or None, _coordinators_for(hass, call), call.data.get("note"))
 
     async def preset_load(call: ServiceCall) -> ServiceResponse:
-        preset = call.data["preset"]
-        results = {}
-        for co in _coordinators_for(hass, call):
-            path = _preset_path(preset, co.camera_id)
-            if not os.path.exists(path):
-                results[co.camera_id] = {"state": "failed", "error": f"no file {path}"}
-                continue
-            data = await hass.async_add_executor_job(lambda p=path: open(p, "rb").read())
-            try:
-                started = await co.client.preset_load(data, preset)
-                job = await co.client.wait_job(started["job_id"], LOAD_TIMEOUT_S)
-            except BridgeError as e:
-                job = {"state": "failed", "error": e.body}
-            results[co.camera_id] = job
-            event = EVENT_PRESET_APPLIED if job.get("state") == "verified" else EVENT_PRESET_FAILED
-            hass.bus.async_fire(event, {"camera_id": co.camera_id, "serial": co.serial, "preset": preset, "job": job})
-            await co.async_request_refresh()
-        return {"preset": preset, "cameras": results}
+        return await get_studio(hass).load(call.data["preset"], _coordinators_for(hass, call))
+
+    async def preset_list(call: ServiceCall) -> ServiceResponse:
+        st = get_studio(hass)
+        await st.refresh()
+        return {"presets": st.presets}
+
+    async def preset_delete(call: ServiceCall) -> ServiceResponse:
+        await get_studio(hass).delete(call.data["preset"])
+        return {"deleted": call.data["preset"]}
+
+    async def sync_from(call: ServiceCall) -> ServiceResponse:
+        st = get_studio(hass)
+        targets = _coordinators_for(hass, call) if call.data.get("device_id") else None
+        if call.data.get("mode", "parameters") == "full":
+            return await st.sync_full(call.data["source"], targets)
+        return await st.sync_parameters(call.data["source"], targets)
 
     async def clock_sync(call: ServiceCall) -> ServiceResponse:
         out = {}
@@ -240,7 +232,10 @@ def _register_services(hass: HomeAssistant) -> None:
         return out
 
     target = {vol.Optional("device_id"): vol.Any(cv.string, [cv.string])}
-    hass.services.async_register(DOMAIN, SERVICE_PRESET_SAVE, preset_save, vol.Schema({**target, vol.Required("preset"): cv.string}), SupportsResponse.OPTIONAL)
+    hass.services.async_register(DOMAIN, SERVICE_PRESET_SAVE, preset_save, vol.Schema({**target, vol.Optional("preset"): cv.string, vol.Optional("note"): cv.string}), SupportsResponse.OPTIONAL)
+    hass.services.async_register(DOMAIN, SERVICE_PRESET_LIST, preset_list, vol.Schema({}), SupportsResponse.ONLY)
+    hass.services.async_register(DOMAIN, SERVICE_PRESET_DELETE, preset_delete, vol.Schema({vol.Required("preset"): cv.string}), SupportsResponse.OPTIONAL)
+    hass.services.async_register(DOMAIN, SERVICE_SYNC_FROM, sync_from, vol.Schema({**target, vol.Required("source"): cv.string, vol.Optional("mode", default="parameters"): vol.In(["parameters", "full"])}), SupportsResponse.OPTIONAL)
     hass.services.async_register(DOMAIN, SERVICE_PRESET_LOAD, preset_load, vol.Schema({**target, vol.Required("preset"): cv.string}), SupportsResponse.OPTIONAL)
     hass.services.async_register(DOMAIN, SERVICE_CLOCK_SYNC, clock_sync, vol.Schema({**target, vol.Optional("force", default=False): cv.boolean}), SupportsResponse.OPTIONAL)
     hass.services.async_register(DOMAIN, SERVICE_SET_PROPERTIES, set_properties, vol.Schema({**target, vol.Required("properties"): dict}), SupportsResponse.OPTIONAL)

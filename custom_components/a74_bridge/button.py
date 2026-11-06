@@ -7,7 +7,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import A74ConfigEntry, A74Coordinator, is_console
+from . import A74ConfigEntry, A74Coordinator, is_console, is_studio
+from .studio_entities import studio_buttons
 
 BUTTONS = (
     ButtonEntityDescription(key="clock_sync", translation_key="clock_sync", icon="mdi:clock-edit-outline", entity_category=EntityCategory.CONFIG),
@@ -17,6 +18,9 @@ BUTTONS = (
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: A74ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
+    if is_studio(entry):
+        async_add_entities(studio_buttons(entry, entry.runtime_data))
+        return
     if is_console(entry):
         return
     co = entry.runtime_data

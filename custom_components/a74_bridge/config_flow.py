@@ -9,7 +9,7 @@ from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TYPE
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import BridgeClient, BridgeError
-from .const import CONF_TOKEN, DEFAULT_PORT, DOMAIN, TYPE_BRIDGE, TYPE_CONSOLE
+from .const import CONF_SOURCE_CAMERA, CONF_TOKEN, DEFAULT_PORT, DEFAULT_SOURCE_CAMERA, DOMAIN, TYPE_BRIDGE, TYPE_CONSOLE, TYPE_STUDIO
 from .rcv import RCV_PORT, RCVClient
 
 BRIDGE_SCHEMA = vol.Schema({
@@ -27,7 +27,7 @@ class A74ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     async def async_step_user(self, user_input=None):
-        return self.async_show_menu(step_id="user", menu_options=["bridge", "console"])
+        return self.async_show_menu(step_id="user", menu_options=["bridge", "console", "studio"])
 
     async def async_step_bridge(self, user_input=None):
         errors = {}
@@ -71,3 +71,24 @@ class A74ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._abort_if_unique_id_configured(updates=user_input)
                 return self.async_create_entry(title="RØDECaster Video", data={**user_input, CONF_TYPE: TYPE_CONSOLE})
         return self.async_show_form(step_id="console", data_schema=CONSOLE_SCHEMA, errors=errors)
+
+    async def async_step_studio(self, user_input=None):
+        await self.async_set_unique_id("studio")
+        self._abort_if_unique_id_configured()
+        if user_input is not None:
+            return self.async_create_entry(title="Studio", data={CONF_TYPE: TYPE_STUDIO, CONF_SOURCE_CAMERA: user_input[CONF_SOURCE_CAMERA]})
+        return self.async_show_form(step_id="studio", data_schema=vol.Schema({vol.Required(CONF_SOURCE_CAMERA, default=DEFAULT_SOURCE_CAMERA): str}))
+
+    @staticmethod
+    def async_get_options_flow(config_entry):
+        return StudioOptionsFlow()
+
+
+class StudioOptionsFlow(config_entries.OptionsFlow):
+    async def async_step_init(self, user_input=None):
+        if self.config_entry.data.get(CONF_TYPE) != TYPE_STUDIO:
+            return self.async_abort(reason="no_options")
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+        cur = self.config_entry.options.get(CONF_SOURCE_CAMERA) or self.config_entry.data.get(CONF_SOURCE_CAMERA) or DEFAULT_SOURCE_CAMERA
+        return self.async_show_form(step_id="init", data_schema=vol.Schema({vol.Required(CONF_SOURCE_CAMERA, default=cur): str}))

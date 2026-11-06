@@ -5,7 +5,8 @@
         "title": "A74 Bridge",
         "menu_options": {
           "bridge": "Camera bridge (Raspberry Pi + Sony A7 IV)",
-          "console": "RØDECaster Video console"
+          "console": "RØDECaster Video console",
+          "studio": "Studio presets (shared preset library and camera sync)"
         }
       },
       "bridge": {
@@ -24,6 +25,13 @@
           "host": "Host",
           "port": "Port"
         }
+      },
+      "studio": {
+        "title": "Studio presets",
+        "description": "One shared hub for preset save/load and syncing settings between cameras.",
+        "data": {
+          "source_camera": "Source camera for sync (bridge name)"
+        }
       }
     },
     "error": {
@@ -32,7 +40,8 @@
       "no_camera": "The bridge answers but reports no camera"
     },
     "abort": {
-      "already_configured": "This bridge is already configured"
+      "already_configured": "This bridge is already configured",
+      "no_options": "This entry has no options"
     }
   },
   "entity": {
@@ -75,6 +84,9 @@
       },
       "timecode_jam": {
         "name": "Last timecode jam"
+      },
+      "last_action": {
+        "name": "Last preset action"
       }
     },
     "binary_sensor": {
@@ -130,6 +142,24 @@
       },
       "timecode_jam": {
         "name": "Jam timecode"
+      },
+      "preset_save": {
+        "name": "Save preset"
+      },
+      "preset_load": {
+        "name": "Load preset"
+      },
+      "preset_delete": {
+        "name": "Delete preset"
+      },
+      "sync_parameters": {
+        "name": "Sync parameters from source camera"
+      },
+      "sync_full": {
+        "name": "Sync full settings from source camera"
+      },
+      "refresh": {
+        "name": "Refresh preset list"
       }
     },
     "switch": {
@@ -138,6 +168,16 @@
       },
       "console_record": {
         "name": "Record"
+      }
+    },
+    "text": {
+      "preset_name": {
+        "name": "Preset name"
+      }
+    },
+    "select": {
+      "preset": {
+        "name": "Preset"
       }
     }
   },
@@ -152,7 +192,11 @@
         },
         "preset": {
           "name": "Preset name",
-          "description": "Folder name under /share/camera_presets."
+          "description": "Folder name under /share/camera_presets; empty = date and time."
+        },
+        "note": {
+          "name": "Note",
+          "description": "Free text stored with the preset."
         }
       }
     },
@@ -231,6 +275,48 @@
         "fps": {
           "name": "Frame rate",
           "description": "Timecode frame rate (25 for PAL studios)."
+        }
+      }
+    },
+    "preset_list": {
+      "name": "List presets",
+      "description": "Returns the preset library with metadata."
+    },
+    "preset_delete": {
+      "name": "Delete preset",
+      "description": "Removes a preset folder.",
+      "fields": {
+        "preset": {
+          "name": "Preset name",
+          "description": "Folder name under /share/camera_presets."
+        }
+      }
+    },
+    "sync_from": {
+      "name": "Sync from camera",
+      "description": "Copies settings from one camera to the others: parameters (exposure, WB, profile, format; no reboot) or full (settings file, reboots the targets).",
+      "fields": {
+        "device_id": {
+          "name": "Target bridges",
+          "description": "Targets; empty = all other cameras."
+        },
+        "source": {
+          "name": "Source camera",
+          "description": "Bridge name, e.g. a74-bridge-1."
+        },
+        "mode": {
+          "name": "Mode",
+          "description": "parameters or full"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Studio presets",
+        "data": {
+          "source_camera": "Source camera for sync (bridge name)"
         }
       }
     }

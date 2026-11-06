@@ -6,13 +6,15 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import A74ConfigEntry, A74Coordinator, is_console
+from . import A74ConfigEntry, A74Coordinator, is_console, is_studio
 from .console_entities import console_switches
 
 DESC = SwitchEntityDescription(key="record", translation_key="record", icon="mdi:record-rec")
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: A74ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
+    if is_studio(entry):
+        return
     if is_console(entry):
         async_add_entities(console_switches(entry, entry.runtime_data))
         return
