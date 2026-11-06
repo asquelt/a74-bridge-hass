@@ -131,6 +131,9 @@
       },
       "console_input4": {
         "name": "Video input 4"
+      },
+      "preset_modified": {
+        "name": "Preset modified"
       }
     },
     "button": {
