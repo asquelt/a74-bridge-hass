@@ -97,8 +97,25 @@ def _gb(client: RCVClient, n: int):
     return None if d is None else round(d["remaining_bytes"] / 1e9, 1)
 
 
-def _hdmi(n: int):
+def _input_on(n: int):
     return lambda c: (c.video_in_state(n) == "connected") if c.video_in_state(n) is not None else None
+
+
+class RCVInput(RCVBinary):
+    """One of the console's video channels (1-4). On the Video S channel 4 has no HDMI port of its
+    own: channels are logical, `source`/`sub_source` say what feeds them."""
+
+    def __init__(self, entry: ConfigEntry, client: RCVClient, n: int) -> None:
+        super().__init__(entry, client, f"console_input{n}", _input_on(n), BinarySensorDeviceClass.PLUG)
+        self._n = n
+
+    @property
+    def extra_state_attributes(self):
+        c, n = self.client, self._n
+        src = c.state.get(f"/videoIn/{n}/source"); sub = c.state.get(f"/videoIn/{n}/sub_source")
+        meta = c.video_in_meta(n)
+        return {"state": c.video_in_state(n), "source": src[0] if src else None, "hdmi_port": sub[0] if sub else None,
+                "resolution": meta.get("RESOLUTION"), "frame_rate": meta.get("FRAME RATE"), "format": meta.get("FORMAT")}
 
 
 def console_switches(entry: ConfigEntry, client: RCVClient) -> list:
@@ -112,7 +129,7 @@ def console_binary_sensors(entry: ConfigEntry, client: RCVClient) -> list:
         RCVBinary(entry, client, "console_record_enabled", lambda c: c.record_enabled, diagnostic=True),
         RCVBinary(entry, client, "console_live", lambda c: c.live),
     ]
-    out += [RCVBinary(entry, client, f"console_hdmi{n}", _hdmi(n), BinarySensorDeviceClass.PLUG) for n in range(1, 5)]
+    out += [RCVInput(entry, client, n) for n in range(1, 5)]
     return out
 
 

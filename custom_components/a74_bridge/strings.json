@@ -105,17 +105,17 @@
       "console_live": {
         "name": "Live"
       },
-      "console_hdmi1": {
-        "name": "HDMI 1"
+      "console_input1": {
+        "name": "Video input 1"
       },
-      "console_hdmi2": {
-        "name": "HDMI 2"
+      "console_input2": {
+        "name": "Video input 2"
       },
-      "console_hdmi3": {
-        "name": "HDMI 3"
+      "console_input3": {
+        "name": "Video input 3"
       },
-      "console_hdmi4": {
-        "name": "HDMI 4"
+      "console_input4": {
+        "name": "Video input 4"
       }
     },
     "button": {
