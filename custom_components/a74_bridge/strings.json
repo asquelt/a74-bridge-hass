@@ -3,11 +3,26 @@
     "step": {
       "user": {
         "title": "A74 Bridge",
+        "menu_options": {
+          "bridge": "Camera bridge (Raspberry Pi + Sony A7 IV)",
+          "console": "RØDECaster Video console"
+        }
+      },
+      "bridge": {
+        "title": "Camera bridge",
         "description": "Address of the Raspberry Pi bridge and the token from /etc/a74-bridge/bridge.env.",
         "data": {
           "host": "Host",
           "port": "Port",
           "token": "Token"
+        }
+      },
+      "console": {
+        "title": "RØDECaster Video",
+        "description": "Address of the console on the studio LAN (control port 10024, no authentication).",
+        "data": {
+          "host": "Host",
+          "port": "Port"
         }
       }
     },
@@ -48,6 +63,15 @@
       },
       "bridge_uptime": {
         "name": "Bridge uptime"
+      },
+      "console_program": {
+        "name": "Program"
+      },
+      "console_usb_free": {
+        "name": "USB disk free"
+      },
+      "console_emmc_free": {
+        "name": "Internal storage free"
       }
     },
     "binary_sensor": {
@@ -68,6 +92,30 @@
       },
       "overheating": {
         "name": "Overheating"
+      },
+      "console_connected": {
+        "name": "Control link"
+      },
+      "console_recording": {
+        "name": "Recording"
+      },
+      "console_record_enabled": {
+        "name": "Record enabled"
+      },
+      "console_live": {
+        "name": "Live"
+      },
+      "console_hdmi1": {
+        "name": "HDMI 1"
+      },
+      "console_hdmi2": {
+        "name": "HDMI 2"
+      },
+      "console_hdmi3": {
+        "name": "HDMI 3"
+      },
+      "console_hdmi4": {
+        "name": "HDMI 4"
       }
     },
     "button": {
@@ -81,6 +129,9 @@
     "switch": {
       "record": {
         "name": "Record (manual)"
+      },
+      "console_record": {
+        "name": "Record"
       }
     }
   },
@@ -143,7 +194,7 @@
     },
     "record": {
       "name": "Recording",
-      "description": "Manual use from the panel only; automations never start or stop recording.",
+      "description": "Start or stop recording on the cameras and the RØDECaster Video console together (the studio recording mode). Never called from schedules.",
       "fields": {
         "device_id": {
           "name": "Bridge",

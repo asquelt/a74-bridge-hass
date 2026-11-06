@@ -8,7 +8,7 @@ from datetime import timedelta
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
-from homeassistant.const import CONF_HOST, CONF_PORT, Platform
+from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TYPE, Platform
 from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv, device_registry as dr
@@ -16,15 +16,20 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import BridgeClient, BridgeError
+from .rcv import RCVClient
 from .const import (
     CONF_TOKEN, DOMAIN, EVENT_CAMERA_DISCONNECTED, EVENT_POWER_LOSS, EVENT_PRESET_APPLIED, EVENT_PRESET_FAILED,
     LOAD_TIMEOUT_S, PRESET_DIR, SCAN_INTERVAL_S, SERVICE_CLOCK_SYNC, SERVICE_PRESET_LOAD, SERVICE_PRESET_SAVE,
-    SERVICE_RECORD, SERVICE_SET_PROPERTIES,
+    SERVICE_RECORD, SERVICE_SET_PROPERTIES, TYPE_CONSOLE,
 )
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.BUTTON, Platform.SWITCH]
-type A74ConfigEntry = ConfigEntry[A74Coordinator]
+type A74ConfigEntry = ConfigEntry[A74Coordinator | RCVClient]
+
+
+def is_console(entry: ConfigEntry) -> bool:
+    return entry.data.get(CONF_TYPE) == TYPE_CONSOLE
 
 
 class A74Coordinator(DataUpdateCoordinator[dict]):
@@ -69,6 +74,13 @@ class A74Coordinator(DataUpdateCoordinator[dict]):
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: A74ConfigEntry) -> bool:
+    if is_console(entry):
+        rcv = RCVClient(entry.data[CONF_HOST], entry.data[CONF_PORT])
+        rcv.start()
+        entry.runtime_data = rcv
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+        _register_services(hass)
+        return True
     client = BridgeClient(async_get_clientsession(hass), entry.data[CONF_HOST], entry.data[CONF_PORT], entry.data[CONF_TOKEN])
     coordinator = A74Coordinator(hass, entry, client)
     await coordinator.async_config_entry_first_refresh()
@@ -79,7 +91,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: A74ConfigEntry) -> bool:
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: A74ConfigEntry) -> bool:
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if ok and is_console(entry):
+        await entry.runtime_data.stop()
+    return ok
 
 
 # ---------------------------------------------------------------- services
@@ -88,7 +103,7 @@ def _coordinators_for(hass: HomeAssistant, call: ServiceCall) -> list[A74Coordin
     device_ids = call.data.get("device_id") or []
     if isinstance(device_ids, str):
         device_ids = [device_ids]
-    entries = [e for e in hass.config_entries.async_entries(DOMAIN) if e.state is ConfigEntryState.LOADED]
+    entries = [e for e in hass.config_entries.async_entries(DOMAIN) if e.state is ConfigEntryState.LOADED and not is_console(e)]
     if not device_ids:
         return [e.runtime_data for e in entries]
     reg = dr.async_get(hass)
@@ -100,8 +115,22 @@ def _coordinators_for(hass: HomeAssistant, call: ServiceCall) -> list[A74Coordin
         for e in entries:
             if e.entry_id in dev.config_entries:
                 out.append(e.runtime_data)
-    if not out:
-        raise HomeAssistantError("no a74_bridge device in the target")
+    return out
+
+
+def _consoles_for(hass: HomeAssistant, call: ServiceCall) -> list[RCVClient]:
+    device_ids = call.data.get("device_id") or []
+    if isinstance(device_ids, str):
+        device_ids = [device_ids]
+    entries = [e for e in hass.config_entries.async_entries(DOMAIN) if e.state is ConfigEntryState.LOADED and is_console(e)]
+    if not device_ids:
+        return [e.runtime_data for e in entries]
+    reg = dr.async_get(hass)
+    out = []
+    for did in device_ids:
+        dev = reg.async_get(did)
+        if dev:
+            out.extend(e.runtime_data for e in entries if e.entry_id in dev.config_entries)
     return out
 
 
@@ -178,6 +207,13 @@ def _register_services(hass: HomeAssistant) -> None:
 
     async def record(call: ServiceCall) -> ServiceResponse:
         out = {}
+        start = call.data["action"] == "start"
+        for rcv in _consoles_for(hass, call):
+            try:
+                await rcv.set_record(start)
+                out[f"console {rcv.host}"] = {"sent": True}
+            except Exception as e:  # noqa: BLE001
+                out[f"console {rcv.host}"] = {"error": str(e)}
         for co in _coordinators_for(hass, call):
             try:
                 out[co.camera_id] = await co.client.record(call.data["action"] == "start")

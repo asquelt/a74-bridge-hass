@@ -17,3 +17,7 @@ SERVICE_PRESET_LOAD = "preset_load"
 SERVICE_CLOCK_SYNC = "clock_sync"
 SERVICE_SET_PROPERTIES = "set_properties"
 SERVICE_RECORD = "record"
+
+TYPE_BRIDGE = "bridge"
+TYPE_CONSOLE = "console"
+SERVICE_CONSOLE_RECORD = "console_record"

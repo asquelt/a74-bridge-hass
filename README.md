@@ -2,6 +2,10 @@
 
 Home Assistant integration for `a74-bridged`: a Raspberry Pi bridge that controls one Sony A7 IV (ILCE-7M4)
 over the Sony Camera Remote SDK and exposes it as a small REST API. One config entry per bridge/camera.
+Since 0.2.0 the integration can also control a **RØDECaster Video** console (OSC over TCP 10024, protocol as
+reverse-engineered by [rodecaster-video-linux](https://github.com/miquelbaixas/rodecaster-video-linux) and used by the
+[Companion module](https://github.com/bitfocus/companion-module-rode-rcv)): record switch, HDMI input and
+recording state, program scene, disk space. `a74_bridge.record` then starts or stops the cameras and the console together.
 
 This repository holds only the Home Assistant side (pure Python, no Sony code). The bridge daemon, the
 settings-file tooling and the design notes live in a separate, private repository.

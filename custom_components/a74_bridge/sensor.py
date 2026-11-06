@@ -11,7 +11,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import A74ConfigEntry, A74Coordinator
+from . import A74ConfigEntry, A74Coordinator, is_console
+from .console_entities import console_sensors
 from .const import DOMAIN
 
 
@@ -52,6 +53,9 @@ SENSORS: tuple[A74SensorDescription, ...] = (
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: A74ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
+    if is_console(entry):
+        async_add_entities(console_sensors(entry, entry.runtime_data))
+        return
     co = entry.runtime_data
     async_add_entities(A74Sensor(co, d) for d in SENSORS)
 
