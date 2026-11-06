@@ -21,7 +21,7 @@ Without HACS: copy `custom_components/a74_bridge` into your `config/custom_compo
 - Binary sensors: SDK session, recording, USB in Remote Shooting mode, preset load in progress, clock OK, overheating.
 - Sensors: USB mode, firmware, battery level, power source, active preset, last load job, camera clock offset,
   Pi temperature, USB disconnect counter, bridge uptime.
-- Buttons: sync camera clock, restart the SDK session.
+- Buttons: sync camera clock, restart the SDK session. Switch: recording (manual use from the panel only; the studio rule is that automations never start or stop recording).
 - Services (`a74_bridge.*`): `preset_save`, `preset_load` (settings files kept in `/share/camera_presets/<preset>/<camera>.DAT`,
   load waits for the camera to reboot and verifies), `clock_sync`, `set_properties` (raw SDK values), `record`.
 - Events: `a74_bridge_preset_applied`, `a74_bridge_preset_failed`, `a74_bridge_camera_disconnected`, `a74_bridge_camera_power_loss`.

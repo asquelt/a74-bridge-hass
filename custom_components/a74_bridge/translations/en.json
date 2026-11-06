@@ -77,6 +77,11 @@
       "reconnect": {
         "name": "Wznów sesję SDK"
       }
+    },
+    "switch": {
+      "record": {
+        "name": "Nagrywanie (ręcznie)"
+      }
     }
   }
 }
