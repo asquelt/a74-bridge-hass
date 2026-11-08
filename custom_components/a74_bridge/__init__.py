@@ -19,7 +19,7 @@ from .studio import Studio
 from .const import (
     CONF_GUARD_ENTITY, CONF_TOKEN, DEFAULT_GUARD_ENTITY, DOMAIN, EVENT_CAMERA_DISCONNECTED, EVENT_POWER_LOSS, EVENT_PRESET_APPLIED, EVENT_PRESET_FAILED,
     LOAD_TIMEOUT_S, PRESET_DIR, SCAN_INTERVAL_S, SERVICE_CLOCK_SYNC, SERVICE_PRESET_LOAD, SERVICE_PRESET_SAVE,
-    SERVICE_PRESET_DELETE, SERVICE_PRESET_LIST, SERVICE_RECORD, SERVICE_SET_PROPERTIES, SERVICE_SYNC_FROM, SERVICE_TIMECODE_JAM, TYPE_CONSOLE, TYPE_STUDIO,
+    SERVICE_PRESET_DELETE, SERVICE_PRESET_LIST, SERVICE_RECORD, SERVICE_SET_PROPERTIES, SERVICE_SYNC_FROM, SERVICE_TIMECODE_JAM, SERVICE_FOCUS_REFRESH, TYPE_CONSOLE, TYPE_STUDIO,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -120,6 +120,24 @@ async def async_unload_entry(hass: HomeAssistant, entry: A74ConfigEntry) -> bool
 
 
 # ---------------------------------------------------------------- services
+async def focus_refresh(hass: HomeAssistant, cos: list[A74Coordinator] | None = None) -> dict:
+    """Refresh focus on the given (default: all) cameras in parallel. Allowed while recording (studio exception)."""
+    import asyncio  # noqa: PLC0415
+    if cos is None:
+        cos = [e.runtime_data for e in hass.config_entries.async_entries(DOMAIN) if e.state is ConfigEntryState.LOADED and not is_console(e) and not is_studio(e)]
+
+    async def one(co):
+        try:
+            return co.camera_id, await co.client.focus_refresh()
+        except BridgeError as e:
+            return co.camera_id, {"error": e.body}
+        except Exception as e:  # noqa: BLE001 - bridge unreachable etc.
+            return co.camera_id, {"error": str(e)}
+    out = dict(await asyncio.gather(*(one(co) for co in cos)))
+    _LOGGER.info("focus refresh: %s", out)
+    return out
+
+
 def _coordinators_for(hass: HomeAssistant, call: ServiceCall) -> list[A74Coordinator]:
     """Resolve device_id list (or all entries when none given)."""
     device_ids = call.data.get("device_id") or []
@@ -259,6 +277,9 @@ def _register_services(hass: HomeAssistant) -> None:
             out[k] = v
         return out
 
+    async def focus_refresh_service(call: ServiceCall) -> ServiceResponse:
+        return await focus_refresh(hass, _coordinators_for(hass, call))
+
     target = {vol.Optional("device_id"): vol.Any(cv.string, [cv.string])}
     hass.services.async_register(DOMAIN, SERVICE_PRESET_SAVE, preset_save, vol.Schema({**target, vol.Optional("preset"): cv.string, vol.Optional("note"): cv.string}), SupportsResponse.OPTIONAL)
     hass.services.async_register(DOMAIN, SERVICE_PRESET_LIST, preset_list, vol.Schema({}), SupportsResponse.ONLY)
@@ -269,3 +290,4 @@ def _register_services(hass: HomeAssistant) -> None:
     hass.services.async_register(DOMAIN, SERVICE_SET_PROPERTIES, set_properties, vol.Schema({**target, vol.Required("properties"): dict}), SupportsResponse.OPTIONAL)
     hass.services.async_register(DOMAIN, SERVICE_RECORD, record, vol.Schema({**target, vol.Required("action"): vol.In(["start", "stop"]), vol.Optional("jam", default=True): cv.boolean, vol.Optional("fps", default=25): vol.In([24, 25, 30, 50, 60])}), SupportsResponse.OPTIONAL)
     hass.services.async_register(DOMAIN, SERVICE_TIMECODE_JAM, timecode_jam, vol.Schema({**target, vol.Optional("fps", default=25): vol.In([24, 25, 30, 50, 60])}), SupportsResponse.OPTIONAL)
+    hass.services.async_register(DOMAIN, SERVICE_FOCUS_REFRESH, focus_refresh_service, vol.Schema({**target}), SupportsResponse.OPTIONAL)

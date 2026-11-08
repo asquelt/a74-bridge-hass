@@ -101,3 +101,10 @@ timecode_jam:
       selector:
         select:
           options: ["24", "25", "30", "50", "60"]
+focus_refresh:
+  fields:
+    device_id:
+      selector:
+        device:
+          integration: a74_bridge
+          multiple: true

@@ -82,7 +82,7 @@ class StudioButton(StudioEntity, ButtonEntity):
 
     @property
     def available(self) -> bool:
-        return not self.studio.busy
+        return self._key == "focus_refresh_all" or not self.studio.busy
 
     async def async_press(self) -> None:
         k = self._key
@@ -104,6 +104,9 @@ class StudioButton(StudioEntity, ButtonEntity):
             await self.studio.refresh()
         elif k == "refresh_all":
             await self.studio.refresh_all()
+        elif k == "focus_refresh_all":
+            from . import focus_refresh  # noqa: PLC0415
+            await focus_refresh(self.hass)
 
 
 class LastActionSensor(StudioEntity, SensorEntity):
@@ -135,4 +138,5 @@ def studio_buttons(entry, studio): return [
     StudioButton(entry, studio, "sync_full", "mdi:content-copy"),
     StudioButton(entry, studio, "refresh", "mdi:refresh"),
     StudioButton(entry, studio, "refresh_all", "mdi:refresh-circle"),
+    StudioButton(entry, studio, "focus_refresh_all", "mdi:face-recognition"),
 ]

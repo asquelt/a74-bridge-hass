@@ -55,6 +55,10 @@ class BridgeClient:
     async def timecode_jam(self, fps: int = 25) -> dict:
         return await self._json("POST", f"/timecode/jam?fps={fps}", data=b"")
 
+    async def focus_refresh(self) -> dict:
+        """Drop a touch/tracking focus lock; the bridge allows this one even while recording."""
+        return await self._json("POST", "/camera/focus/refresh", data=b"")
+
     async def quiet(self, on: bool) -> dict:
         return await self._json("POST", f"/quiet?on={1 if on else 0}", data=b"")
 

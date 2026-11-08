@@ -202,6 +202,12 @@
       },
       "refresh_all": {
         "name": "Refresh all cameras"
+      },
+      "focus_refresh": {
+        "name": "Refresh focus"
+      },
+      "focus_refresh_all": {
+        "name": "Refresh focus (all cameras)"
       }
     },
     "switch": {
@@ -352,6 +358,16 @@
         "mode": {
           "name": "Mode",
           "description": "parameters or full"
+        }
+      }
+    },
+    "focus_refresh": {
+      "name": "Refresh focus",
+      "description": "Cancels a touch/tracking focus lock so face recognition in the Wide area takes over again. Allowed while recording.",
+      "fields": {
+        "device_id": {
+          "name": "Bridge",
+          "description": "a74_bridge devices; empty = all."
         }
       }
     }
