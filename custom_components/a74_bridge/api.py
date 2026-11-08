@@ -25,6 +25,14 @@ class BridgeClient:
         self._headers = {"X-Auth-Token": token}
 
     async def _json(self, method: str, path: str, **kw: Any) -> Any:
+        # the bridge (cpp-httplib) closes idle keep-alive connections; the first request on a stale pooled connection
+        # fails with ServerDisconnectedError before the bridge sees it, so retrying once is safe for POSTs too
+        try:
+            return await self._json_once(method, path, **kw)
+        except aiohttp.ServerDisconnectedError:
+            return await self._json_once(method, path, **kw)
+
+    async def _json_once(self, method: str, path: str, **kw: Any) -> Any:
         async with self._session.request(method, self._base + path, headers=self._headers, timeout=aiohttp.ClientTimeout(total=30), **kw) as r:
             body = await r.json(content_type=None) if r.content_length != 0 else {}
             if r.status >= 400:
