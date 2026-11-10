@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import socket
 import struct
 from collections.abc import Callable
 from typing import Any
@@ -12,6 +13,26 @@ from typing import Any
 _LOGGER = logging.getLogger(__name__)
 RCV_PORT = 10024
 KEEPALIVE = struct.pack("<I", 0)
+# The console emits a zero-length keepalive frame about every 1.1 s even when idle, so a stretch
+# of total silence means the link is dead. A hard disconnect (power/network loss, no TCP FIN)
+# otherwise leaves the socket half-open and `connected` stuck True for minutes.
+RX_TIMEOUT = 5.0
+
+
+def _enable_tcp_keepalive(writer: asyncio.StreamWriter) -> None:
+    """Belt-and-suspenders to the app-level RX watchdog: let the OS probe a silent peer and drop a
+    half-open socket, so a write/drain also fails promptly instead of blocking on TCP retransmits."""
+    sock = writer.get_extra_info("socket")
+    if sock is None:
+        return
+    try:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        for opt, val in (("TCP_KEEPIDLE", 3), ("TCP_KEEPINTVL", 2), ("TCP_KEEPCNT", 3)):
+            n = getattr(socket, opt, None)
+            if n is not None:
+                sock.setsockopt(socket.IPPROTO_TCP, n, val)
+    except OSError as e:  # noqa: BLE001
+        _LOGGER.debug("RCV: could not set TCP keepalive: %s", e)
 
 
 def _pad(b: bytes) -> bytes:
@@ -167,6 +188,7 @@ class RCVClient:
         while not self._stop:
             try:
                 reader, writer = await asyncio.wait_for(asyncio.open_connection(self.host, self.port), 10)
+                _enable_tcp_keepalive(writer)
                 self._writer = writer
                 self.connected = True
                 backoff = 2
@@ -190,16 +212,21 @@ class RCVClient:
 
     async def _read_loop(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         buf = b""
-        last_ka = asyncio.get_running_loop().time()
+        loop = asyncio.get_running_loop()
+        last_ka = loop.time()
+        last_rx = loop.time()
         while not self._stop:
             try:
                 chunk = await asyncio.wait_for(reader.read(1 << 16), 1.0)
                 if not chunk:
                     raise ConnectionError("console closed the connection")
                 buf += chunk
+                last_rx = loop.time()
             except asyncio.TimeoutError:
                 pass
             now = asyncio.get_running_loop().time()
+            if now - last_rx > RX_TIMEOUT:
+                raise ConnectionError(f"no data from console for {now - last_rx:.1f}s (link dead)")
             if now - last_ka > 1.5:
                 writer.write(KEEPALIVE)
                 await writer.drain()
