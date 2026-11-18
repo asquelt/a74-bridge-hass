@@ -1,5 +1,5 @@
 # Creates a GitHub Release for every v* tag that arrives through the Gitea push mirror,
-# so HACS sees proper versions and shows the changelog (release notes) in its update dialog.
+# so the Home Assistant Marketplace (formerly HACS) sees proper versions and shows the changelog (release notes) in its update dialog.
 name: release
 on:
   push:

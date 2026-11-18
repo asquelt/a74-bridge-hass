@@ -10,10 +10,11 @@ recording state, program scene, disk space. `a74_bridge.record` then starts or s
 This repository holds only the Home Assistant side (pure Python, no Sony code). The bridge daemon, the
 settings-file tooling and the design notes live in a separate, private repository.
 
-## Install (HACS)
+## Install (Home Assistant Marketplace)
 
-1. HACS → Integrations → ⋮ → *Custom repositories* → add `https://github.com/asquelt/a74-bridge-hass`, category *Integration*.
-2. Download **A74 Bridge (Sony A7 IV)**, restart Home Assistant.
+1. In the Home Assistant Marketplace (the successor of HACS in current releases; on older versions use HACS the same way)
+   add `https://github.com/asquelt/a74-bridge-hass` as a custom repository, category *Integration*.
+2. Install **A74 Bridge (Sony A7 IV)**, restart Home Assistant. Updates arrive the same way; new code is loaded only after a restart.
 3. Settings → Devices & services → *Add integration* → **A74 Bridge** → host of the bridge, port (8080) and the token
    from `/etc/a74-bridge/bridge.env` on the Pi.
 
@@ -21,7 +22,8 @@ Releases: every `vX.Y.Z` tag pushed to the source repository is mirrored here an
 
 Brand icon/logo ship inside the integration (`custom_components/a74_bridge/brand/`, Home Assistant ≥ 2026.3 serves them locally).
 
-Without HACS: copy `custom_components/a74_bridge` into your `config/custom_components/` (see `install.sh`).
+Install and update only through the Marketplace. Copying files into `config/custom_components/` by hand leaves the
+Marketplace's record of the installed version out of step with what is on disk.
 
 ## What you get per camera
 
