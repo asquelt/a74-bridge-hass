@@ -35,7 +35,17 @@ Without HACS: copy `custom_components/a74_bridge` into your `config/custom_compo
 - Studio hub (add it once from the integration menu): preset name text, preset list select, buttons Save / Load / Delete preset,
   Sync parameters / Sync full settings from the source camera (default `a74-bridge-1`, changeable in the entry options), last-action sensor.
   Presets live in `/share/camera_presets/<name>/` on the HA host (covered by HA backups when the `share` folder is included).
-- Events: `a74_bridge_preset_applied`, `a74_bridge_preset_failed`, `a74_bridge_camera_disconnected`, `a74_bridge_camera_power_loss`.
+- Recording upload (bridge ≥ 0.4.1 with `A74_MEDIA_REMOTE` set): services `media_list`, `media_upload`, `media_job`, `media_cancel`
+  for the camera cards and `console_media_list`, `console_media_upload`, `console_media_job`, `console_media_cancel` for the
+  console's ISO disk (through the one bridge that has `A74_CONSOLE_SSH`). Per camera: *Card upload* (job state, attributes with
+  bytes and error), *Card upload progress* (%), *Card upload running*; the console bridge also gets the three *Console ISO upload* entities.
+  Listing cards and uploading take the camera out of Remote mode, so both are refused while the studio guard entity is on or a
+  camera records, and turning the guard on cancels running uploads. `media_upload` waits up to 30 s for a camera that is still
+  returning from a card listing.
+  `a74_bridge.record` with `action: start` first cancels running card uploads and waits (up to 3 min) for those cameras to
+  return, then starts everything together; a stop that arrives meanwhile aborts the pending start.
+- Events: `a74_bridge_preset_applied`, `a74_bridge_preset_failed`, `a74_bridge_camera_disconnected`, `a74_bridge_camera_power_loss`,
+  `a74_bridge_media_job_finished` (`camera_id`, `source` = `camera` or `console`, `job`).
 
 The bridge polls `GET /status` every 10 s. Preset load reboots the camera and interrupts HDMI for about 11 s,
 so it is meant to run before a session, never during one.

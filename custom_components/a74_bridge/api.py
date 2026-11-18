@@ -97,6 +97,32 @@ class BridgeClient:
                 raise BridgeError(r.status, body)
             return body
 
+    # ---- recording upload (bridge >= 0.4.1): camera cards and, on one bridge, the console's ISO disk ----
+    async def media_list(self) -> dict:
+        """Files on the camera cards. The bridge leaves Remote mode for about 6 s to read them."""
+        return await self._json("GET", "/media/list")
+
+    async def media_upload(self, prefix: str, files: list[dict]) -> dict:
+        return await self._json("POST", "/media/upload", json={"prefix": prefix, "files": files})
+
+    async def media_job(self) -> dict:
+        return await self._json("GET", "/media/job")
+
+    async def media_cancel(self) -> dict:
+        return await self._json("POST", "/media/upload/cancel", data=b"")
+
+    async def console_list(self) -> dict:
+        return await self._json("GET", "/console/list")
+
+    async def console_upload(self, prefix: str, files: list[dict]) -> dict:
+        return await self._json("POST", "/console/upload", json={"prefix": prefix, "files": files})
+
+    async def console_job(self) -> dict:
+        return await self._json("GET", "/console/job")
+
+    async def console_cancel(self) -> dict:
+        return await self._json("POST", "/console/upload/cancel", data=b"")
+
     async def job(self, job_id: str) -> dict:
         return await self._json("GET", f"/jobs/{job_id}")
 

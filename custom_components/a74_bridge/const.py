@@ -31,3 +31,16 @@ SERVICE_PRESET_DELETE = "preset_delete"
 SERVICE_SYNC_FROM = "sync_from"
 CONF_GUARD_ENTITY = "guard_entity"
 DEFAULT_GUARD_ENTITY = "input_boolean.tryb_nagrywania"
+
+# recording upload (bridge >= 0.4.1)
+EVENT_MEDIA_JOB_FINISHED = "a74_bridge_media_job_finished"
+SERVICE_MEDIA_LIST = "media_list"
+SERVICE_MEDIA_UPLOAD = "media_upload"
+SERVICE_MEDIA_JOB = "media_job"
+SERVICE_MEDIA_CANCEL = "media_cancel"
+SERVICE_CONSOLE_LIST = "console_media_list"
+SERVICE_CONSOLE_UPLOAD = "console_media_upload"
+SERVICE_CONSOLE_JOB = "console_media_job"
+SERVICE_CONSOLE_CANCEL = "console_media_cancel"
+MEDIA_RELEASE_TIMEOUT_S = 180   # record start waits this long for cameras busy with an upload (cancel takes up to ~90 s on a slow uplink)
+MEDIA_RECONNECT_WAIT_S = 30   # after a card listing the camera needs about 6 s to return to Remote mode

@@ -114,6 +114,18 @@
       },
       "format": {
         "name": "Recording format"
+      },
+      "media_job": {
+        "name": "Card upload"
+      },
+      "media_progress": {
+        "name": "Card upload progress"
+      },
+      "iso_job": {
+        "name": "Console ISO upload"
+      },
+      "iso_progress": {
+        "name": "Console ISO upload progress"
       }
     },
     "binary_sensor": {
@@ -167,6 +179,12 @@
       },
       "slot2_card": {
         "name": "Slot 2 card"
+      },
+      "media_upload": {
+        "name": "Card upload running"
+      },
+      "iso_upload": {
+        "name": "Console ISO upload running"
       }
     },
     "button": {
@@ -370,6 +388,80 @@
           "description": "a74_bridge devices; empty = all."
         }
       }
+    },
+    "media_list": {
+      "name": "List camera card files",
+      "description": "Lists the recordings on the camera cards. The camera leaves Remote mode for about 6 s; refused during a studio session or while recording.",
+      "fields": {
+        "device_id": {
+          "name": "Bridge",
+          "description": "a74_bridge devices; empty = all."
+        }
+      }
+    },
+    "media_upload": {
+      "name": "Upload card files",
+      "description": "Starts a job that sends files from one camera's cards to object storage. The camera cannot be controlled until the job ends; refused during a studio session.",
+      "fields": {
+        "device_id": {
+          "name": "Bridge",
+          "description": "Exactly one a74_bridge camera."
+        },
+        "prefix": {
+          "name": "Prefix",
+          "description": "Path under the bridge's storage remote (A74_MEDIA_REMOTE), e.g. the booking reference."
+        },
+        "files": {
+          "name": "Files",
+          "description": "File names from media_list, or objects {name, folder, dest}."
+        }
+      }
+    },
+    "media_job": {
+      "name": "Card upload job",
+      "description": "Returns the current or last upload job of each camera with the state of every file.",
+      "fields": {
+        "device_id": {
+          "name": "Bridge",
+          "description": "a74_bridge devices; empty = all."
+        }
+      }
+    },
+    "media_cancel": {
+      "name": "Cancel card upload",
+      "description": "Stops the upload, removes the unfinished object and returns the camera to Remote mode.",
+      "fields": {
+        "device_id": {
+          "name": "Bridge",
+          "description": "a74_bridge devices; empty = all."
+        }
+      }
+    },
+    "console_media_list": {
+      "name": "List console ISO files",
+      "description": "Lists the ISO recordings on the RØDECaster's disk through the bridge that reaches it. Does not touch the cameras."
+    },
+    "console_media_upload": {
+      "name": "Upload console ISO files",
+      "description": "Starts a job that streams files from the console's disk to object storage. Refused during a studio session.",
+      "fields": {
+        "prefix": {
+          "name": "Prefix",
+          "description": "Path under the bridge's storage remote (A74_MEDIA_REMOTE), e.g. the booking reference."
+        },
+        "files": {
+          "name": "Files",
+          "description": "Paths from console_media_list, or objects {path, dest}."
+        }
+      }
+    },
+    "console_media_job": {
+      "name": "Console ISO upload job",
+      "description": "Returns the current or last console upload job with the state of every file."
+    },
+    "console_media_cancel": {
+      "name": "Cancel console ISO upload",
+      "description": "Stops the console upload and removes the unfinished object."
     }
   },
   "options": {

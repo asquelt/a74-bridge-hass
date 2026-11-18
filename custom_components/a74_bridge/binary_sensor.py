@@ -51,7 +51,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: A74ConfigEntry, async_ad
         async_add_entities(console_binary_sensors(entry, entry.runtime_data))
         return
     co = entry.runtime_data
-    async_add_entities(A74Binary(co, d) for d in BINARY)
+    descs = list(BINARY)
+    if "media" in (co.data or {}):   # bridge >= 0.4.0
+        descs.append(A74BinaryDescription(key="media_upload", translation_key="media_upload", device_class=BinarySensorDeviceClass.RUNNING, value=lambda d: _g(d, "media", "in_progress")))
+    if _g(co.data or {}, "console", "configured"):
+        descs.append(A74BinaryDescription(key="iso_upload", translation_key="iso_upload", device_class=BinarySensorDeviceClass.RUNNING, value=lambda d: _g(d, "console", "in_progress")))
+    async_add_entities(A74Binary(co, d) for d in descs)
 
 
 class A74Binary(CoordinatorEntity[A74Coordinator], BinarySensorEntity):

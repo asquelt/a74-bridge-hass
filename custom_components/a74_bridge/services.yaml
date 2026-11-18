@@ -108,3 +108,56 @@ focus_refresh:
         device:
           integration: a74_bridge
           multiple: true
+media_list:
+  fields:
+    device_id:
+      selector:
+        device:
+          integration: a74_bridge
+          multiple: true
+media_upload:
+  fields:
+    device_id:
+      selector:
+        device:
+          integration: a74_bridge
+          multiple: false
+    prefix:
+      required: true
+      example: test/rezerwacja-ab12cd
+      selector:
+        text:
+    files:
+      required: true
+      example: '["C0002.MP4", {"name": "C0003.MP4", "dest": "cam1_C0003.MP4"}]'
+      selector:
+        object:
+media_job:
+  fields:
+    device_id:
+      selector:
+        device:
+          integration: a74_bridge
+          multiple: true
+media_cancel:
+  fields:
+    device_id:
+      selector:
+        device:
+          integration: a74_bridge
+          multiple: true
+console_media_list: {}
+console_media_upload:
+  fields:
+    prefix:
+      required: true
+      example: test/rezerwacja-ab12cd
+      selector:
+        text:
+    files:
+      required: true
+      example: '[{"path": "4K CAPTURE_2026-11-08_4_18-43-02/Video/1_CAMERA 1.mp4", "dest": "iso_cam1.mp4"}]'
+      selector:
+        object:
+console_media_job: {}
+console_media_cancel: {}

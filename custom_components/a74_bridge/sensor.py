@@ -84,6 +84,30 @@ SENSORS: tuple[A74SensorDescription, ...] = (
 )
 
 
+def _job_attrs(d: dict, kind: str) -> dict:
+    j = _g(d, kind, "job") or {}
+    return {**{k: j.get(k) for k in ("id", "prefix", "error", "current", "bytes_done", "bytes_total", "started_at", "finished_at")}, "configured": _g(d, kind, "configured")}
+
+
+def _job_percent(d: dict, kind: str):
+    j = _g(d, kind, "job") or {}
+    total = j.get("bytes_total")
+    return round(100 * (j.get("bytes_done") or 0) / total) if total else None
+
+
+def _upload_sensors(kind: str, prefix: str) -> tuple[A74SensorDescription, ...]:
+    return (
+        A74SensorDescription(key=f"{prefix}_job", translation_key=f"{prefix}_job", icon="mdi:cloud-upload-outline", value=lambda d: _g(d, kind, "job", "state") or "none",
+                             attrs=lambda d: _job_attrs(d, kind)),
+        A74SensorDescription(key=f"{prefix}_progress", translation_key=f"{prefix}_progress", icon="mdi:progress-upload", native_unit_of_measurement=PERCENTAGE,
+                             value=lambda d: _job_percent(d, kind)),
+    )
+
+
+MEDIA_SENSORS = _upload_sensors("media", "media")       # clips from the camera cards
+ISO_SENSORS = _upload_sensors("console", "iso")         # the console's ISO disk, on the bridge that reaches it
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: A74ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     if is_studio(entry):
         async_add_entities(studio_sensors(entry, entry.runtime_data))
@@ -92,7 +116,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: A74ConfigEntry, async_ad
         async_add_entities(console_sensors(entry, entry.runtime_data))
         return
     co = entry.runtime_data
-    async_add_entities(A74Sensor(co, d) for d in SENSORS)
+    descs = list(SENSORS)
+    if "media" in (co.data or {}):   # bridge >= 0.4.0
+        descs += MEDIA_SENSORS
+    if _g(co.data or {}, "console", "configured"):
+        descs += ISO_SENSORS
+    async_add_entities(A74Sensor(co, d) for d in descs)
 
 
 class A74Sensor(CoordinatorEntity[A74Coordinator], SensorEntity):
