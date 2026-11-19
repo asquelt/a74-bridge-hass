@@ -22,7 +22,7 @@ from .studio import Studio
 from .const import (
     CONF_GUARD_ENTITY, CONF_TOKEN, DEFAULT_GUARD_ENTITY, DOMAIN, EVENT_CAMERA_DISCONNECTED, EVENT_POWER_LOSS, EVENT_PRESET_APPLIED, EVENT_PRESET_FAILED,
     EVENT_MEDIA_JOB_FINISHED, MEDIA_RECONNECT_WAIT_S, MEDIA_RELEASE_TIMEOUT_S, SERVICE_CONSOLE_CANCEL, SERVICE_CONSOLE_JOB, SERVICE_CONSOLE_LIST, SERVICE_CONSOLE_UPLOAD,
-    SERVICE_MEDIA_CANCEL, SERVICE_MEDIA_JOB, SERVICE_MEDIA_LIST, SERVICE_MEDIA_UPLOAD,
+    SERVICE_MEDIA_CANCEL, SERVICE_MEDIA_JOB, SERVICE_MEDIA_LIST, SERVICE_MEDIA_UPLOAD, SERVICE_MEDIA_DELETE, SERVICE_CONSOLE_DELETE,
     LOAD_TIMEOUT_S, PRESET_DIR, SCAN_INTERVAL_S, SERVICE_CLOCK_SYNC, SERVICE_PRESET_LOAD, SERVICE_PRESET_SAVE,
     SERVICE_PRESET_DELETE, SERVICE_PRESET_LIST, SERVICE_RECORD, SERVICE_SET_PROPERTIES, SERVICE_SYNC_FROM, SERVICE_TIMECODE_JAM, SERVICE_FOCUS_REFRESH, TYPE_CONSOLE, TYPE_STUDIO,
 )
@@ -479,6 +479,32 @@ def _register_services(hass: HomeAssistant) -> None:
         await co.async_request_refresh()
         return out[co.camera_id]
 
+    def _sized(call: ServiceCall, key: str) -> list[dict]:
+        """Files to delete: the size is part of the identity, so a file that only shares the name is never removed."""
+        out = []
+        for f in call.data["files"]:
+            if not isinstance(f, dict) or not f.get(key) or not isinstance(f.get("size"), int) or isinstance(f.get("size"), bool) or f["size"] < 0:
+                raise HomeAssistantError(f"each file needs a {key} and its size in bytes")
+            out.append({key: f[key], "size": f["size"]})
+        return out
+
+    async def media_delete(call: ServiceCall) -> ServiceResponse:
+        cos = _coordinators_for(hass, call)
+        if len(cos) != 1:
+            raise HomeAssistantError("media_delete takes exactly one camera: file names differ per card")
+        _upload_guard(hass, "delete from the card", cos)
+        files = _sized(call, "name")
+        cos[0].media_quiet(90)
+        out = await _each(cos, lambda co: co.client.media_delete(files))
+        await cos[0].async_request_refresh()
+        return out
+
+    async def console_delete(call: ServiceCall) -> ServiceResponse:
+        co = _console_bridge(hass)
+        _upload_guard(hass, "delete from the console disk", [])
+        files = _sized(call, "path")
+        return (await _each([co], lambda c: c.client.console_delete(files)))[co.camera_id]
+
     target = {vol.Optional("device_id"): vol.Any(cv.string, [cv.string])}
     hass.services.async_register(DOMAIN, SERVICE_PRESET_SAVE, preset_save, vol.Schema({**target, vol.Optional("preset"): cv.string, vol.Optional("note"): cv.string}), SupportsResponse.OPTIONAL)
     hass.services.async_register(DOMAIN, SERVICE_PRESET_LIST, preset_list, vol.Schema({}), SupportsResponse.ONLY)
@@ -499,3 +525,6 @@ def _register_services(hass: HomeAssistant) -> None:
     hass.services.async_register(DOMAIN, SERVICE_CONSOLE_UPLOAD, console_upload, vol.Schema(upload), SupportsResponse.OPTIONAL)
     hass.services.async_register(DOMAIN, SERVICE_CONSOLE_JOB, console_job, vol.Schema({}), SupportsResponse.ONLY)
     hass.services.async_register(DOMAIN, SERVICE_CONSOLE_CANCEL, console_cancel, vol.Schema({}), SupportsResponse.OPTIONAL)
+    delete = {vol.Required("files"): vol.All(cv.ensure_list, vol.Length(min=1))}
+    hass.services.async_register(DOMAIN, SERVICE_MEDIA_DELETE, media_delete, vol.Schema({**target, **delete}), SupportsResponse.OPTIONAL)
+    hass.services.async_register(DOMAIN, SERVICE_CONSOLE_DELETE, console_delete, vol.Schema(delete), SupportsResponse.OPTIONAL)

@@ -462,6 +462,30 @@
     "console_media_cancel": {
       "name": "Cancel console ISO upload",
       "description": "Stops the console upload and removes the unfinished object."
+    },
+    "media_delete": {
+      "name": "Delete card files",
+      "description": "Deletes exactly the named files from one camera's cards. Name and size must both match; the result is checked by listing the card again. The camera cannot be controlled for a few seconds; refused during a studio session. Nothing is formatted.",
+      "fields": {
+        "device_id": {
+          "name": "Bridge",
+          "description": "Exactly one a74_bridge camera."
+        },
+        "files": {
+          "name": "Files",
+          "description": "List of {name, size}: the file name on the card and its size in bytes."
+        }
+      }
+    },
+    "console_media_delete": {
+      "name": "Delete console ISO files",
+      "description": "Deletes exactly the named files from the console's ISO disk. Path and size must both match; capture folders left empty are removed too. Refused during a studio session.",
+      "fields": {
+        "files": {
+          "name": "Files",
+          "description": "List of {path, size}: the path under the capture root and the size in bytes."
+        }
+      }
     }
   },
   "options": {

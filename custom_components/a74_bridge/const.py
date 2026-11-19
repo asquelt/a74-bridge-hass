@@ -42,5 +42,7 @@ SERVICE_CONSOLE_LIST = "console_media_list"
 SERVICE_CONSOLE_UPLOAD = "console_media_upload"
 SERVICE_CONSOLE_JOB = "console_media_job"
 SERVICE_CONSOLE_CANCEL = "console_media_cancel"
+SERVICE_MEDIA_DELETE = "media_delete"
+SERVICE_CONSOLE_DELETE = "console_media_delete"
 MEDIA_RELEASE_TIMEOUT_S = 180   # record start waits this long for cameras busy with an upload (cancel takes up to ~90 s on a slow uplink)
 MEDIA_RECONNECT_WAIT_S = 30   # after a card listing the camera needs about 6 s to return to Remote mode

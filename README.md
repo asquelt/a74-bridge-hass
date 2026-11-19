@@ -46,6 +46,11 @@ Marketplace's record of the installed version out of step with what is on disk.
   returning from a card listing.
   `a74_bridge.record` with `action: start` first cancels running card uploads and waits (up to 3 min) for those cameras to
   return, then starts everything together; a stop that arrives meanwhile aborts the pending start.
+- Deleting from the sources (bridge ≥ 0.5.0): `media_delete` (one camera, `files: [{name, size}]`) and `console_media_delete`
+  (`files: [{path, size}]`). Only the named files go, and only when the size matches too; the bridge lists the source again and
+  answers per file `deleted`, `missing` (already gone), `mismatch` or `failed`. On the console, capture folders left empty are
+  removed. A card delete takes the camera out of Remote mode for a few seconds, so the same guards apply as for uploads.
+  Nothing formats a card.
 - Events: `a74_bridge_preset_applied`, `a74_bridge_preset_failed`, `a74_bridge_camera_disconnected`, `a74_bridge_camera_power_loss`,
   `a74_bridge_media_job_finished` (`camera_id`, `source` = `camera` or `console`, `job`).
 

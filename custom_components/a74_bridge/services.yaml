@@ -161,3 +161,22 @@ console_media_upload:
         object:
 console_media_job: {}
 console_media_cancel: {}
+media_delete:
+  fields:
+    device_id:
+      selector:
+        device:
+          integration: a74_bridge
+          multiple: false
+    files:
+      required: true
+      example: '[{"name": "C0013.MP4", "size": 21207010245}]'
+      selector:
+        object:
+console_media_delete:
+  fields:
+    files:
+      required: true
+      example: '[{"path": "4K CAPTURE_2026-11-08_4_18-43-02/Video/1_CAMERA 1.mp4", "size": 115976041}]'
+      selector:
+        object:

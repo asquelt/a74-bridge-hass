@@ -33,7 +33,8 @@ class BridgeClient:
             return await self._json_once(method, path, **kw)
 
     async def _json_once(self, method: str, path: str, **kw: Any) -> Any:
-        async with self._session.request(method, self._base + path, headers=self._headers, timeout=aiohttp.ClientTimeout(total=30), **kw) as r:
+        timeout = aiohttp.ClientTimeout(total=kw.pop("timeout", 30))
+        async with self._session.request(method, self._base + path, headers=self._headers, timeout=timeout, **kw) as r:
             body = await r.json(content_type=None) if r.content_length != 0 else {}
             if r.status >= 400:
                 raise BridgeError(r.status, body)
@@ -122,6 +123,14 @@ class BridgeClient:
 
     async def console_cancel(self) -> dict:
         return await self._json("POST", "/console/upload/cancel", data=b"")
+
+    # ---- deleting from the sources (bridge >= 0.5.0): exactly the named files, each matched by size and verified ----
+    async def media_delete(self, files: list[dict]) -> dict:
+        """Switches the camera to RemoteTransfer for a few seconds; answers when the result has been checked."""
+        return await self._json("POST", "/media/delete", json={"files": files}, timeout=180)
+
+    async def console_delete(self, files: list[dict]) -> dict:
+        return await self._json("POST", "/console/delete", json={"files": files}, timeout=600)
 
     async def job(self, job_id: str) -> dict:
         return await self._json("GET", f"/jobs/{job_id}")
