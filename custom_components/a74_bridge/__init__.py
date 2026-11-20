@@ -24,7 +24,7 @@ from .const import (
     EVENT_MEDIA_JOB_FINISHED, MEDIA_RECONNECT_WAIT_S, MEDIA_RELEASE_TIMEOUT_S, SERVICE_CONSOLE_CANCEL, SERVICE_CONSOLE_JOB, SERVICE_CONSOLE_LIST, SERVICE_CONSOLE_UPLOAD,
     SERVICE_MEDIA_CANCEL, SERVICE_MEDIA_JOB, SERVICE_MEDIA_LIST, SERVICE_MEDIA_UPLOAD, SERVICE_MEDIA_DELETE, SERVICE_CONSOLE_DELETE,
     LOAD_TIMEOUT_S, PRESET_DIR, SCAN_INTERVAL_S, SERVICE_CLOCK_SYNC, SERVICE_PRESET_LOAD, SERVICE_PRESET_SAVE,
-    SERVICE_PRESET_DELETE, SERVICE_PRESET_LIST, SERVICE_RECORD, SERVICE_SET_PROPERTIES, SERVICE_SYNC_FROM, SERVICE_TIMECODE_JAM, SERVICE_FOCUS_REFRESH, TYPE_CONSOLE, TYPE_STUDIO,
+    SERVICE_PRESET_DELETE, SERVICE_PRESET_LIST, SERVICE_PRESET_STATUS, SERVICE_RECORD, SERVICE_SET_PROPERTIES, SERVICE_SYNC_FROM, SERVICE_TIMECODE_JAM, SERVICE_FOCUS_REFRESH, TYPE_CONSOLE, TYPE_STUDIO,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -325,6 +325,9 @@ def _register_services(hass: HomeAssistant) -> None:
         await st.refresh()
         return {"presets": st.presets}
 
+    async def preset_status(call: ServiceCall) -> ServiceResponse:
+        return {"cameras": await get_studio(hass).status(_coordinators_for(hass, call))}
+
     async def preset_delete(call: ServiceCall) -> ServiceResponse:
         await get_studio(hass).delete(call.data["preset"])
         return {"deleted": call.data["preset"]}
@@ -508,6 +511,7 @@ def _register_services(hass: HomeAssistant) -> None:
     target = {vol.Optional("device_id"): vol.Any(cv.string, [cv.string])}
     hass.services.async_register(DOMAIN, SERVICE_PRESET_SAVE, preset_save, vol.Schema({**target, vol.Optional("preset"): cv.string, vol.Optional("note"): cv.string}), SupportsResponse.OPTIONAL)
     hass.services.async_register(DOMAIN, SERVICE_PRESET_LIST, preset_list, vol.Schema({}), SupportsResponse.ONLY)
+    hass.services.async_register(DOMAIN, SERVICE_PRESET_STATUS, preset_status, vol.Schema(target), SupportsResponse.ONLY)
     hass.services.async_register(DOMAIN, SERVICE_PRESET_DELETE, preset_delete, vol.Schema({vol.Required("preset"): cv.string}), SupportsResponse.OPTIONAL)
     hass.services.async_register(DOMAIN, SERVICE_SYNC_FROM, sync_from, vol.Schema({**target, vol.Required("source"): cv.string, vol.Optional("mode", default="parameters"): vol.In(["parameters", "full"])}), SupportsResponse.OPTIONAL)
     hass.services.async_register(DOMAIN, SERVICE_PRESET_LOAD, preset_load, vol.Schema({**target, vol.Required("preset"): cv.string}), SupportsResponse.OPTIONAL)

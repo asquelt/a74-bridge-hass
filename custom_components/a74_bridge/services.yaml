@@ -13,6 +13,13 @@ preset_save:
       selector:
         text:
 preset_list: {}
+preset_status:
+  fields:
+    device_id:
+      selector:
+        device:
+          integration: a74_bridge
+          multiple: true
 preset_delete:
   fields:
     preset:

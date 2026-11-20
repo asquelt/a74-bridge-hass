@@ -351,6 +351,16 @@
       "name": "List presets",
       "description": "Returns the preset library with metadata."
     },
+    "preset_status": {
+      "name": "Preset status",
+      "description": "Runs a fresh drift check and returns, per camera, the active preset, whether the settings were changed since it was loaded or saved, and the changed properties.",
+      "fields": {
+        "device_id": {
+          "name": "Bridge",
+          "description": "a74_bridge devices; empty = all."
+        }
+      }
+    },
     "preset_delete": {
       "name": "Delete preset",
       "description": "Removes a preset folder.",

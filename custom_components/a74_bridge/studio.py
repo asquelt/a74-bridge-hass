@@ -194,6 +194,20 @@ class Studio:
         self._set_action(action="load", preset=preset, cameras=results, ok=all(j.get("state") == "verified" for j in results.values()))
         return {"preset": preset, "cameras": results}
 
+    async def status(self, cos=None) -> dict:
+        """Which preset each camera runs and whether its settings left it: a fresh drift check, not the 15-minute one."""
+        out = {}
+        for co in cos or self.coordinators():
+            try:
+                r = await co.client.preset_drift()
+                out[co.camera_id] = {"active": r.get("active"), "modified": bool(r.get("modified")), "changes": r.get("changes") or {}}
+            except BridgeError as e:
+                out[co.camera_id] = {"error": e.body}
+            except Exception as e:  # noqa: BLE001
+                out[co.camera_id] = {"error": str(e) or type(e).__name__}
+            await co.async_request_refresh()
+        return out
+
     async def refresh_all(self) -> dict:
         """Drift check (full property read) on every idle camera, then a status refresh; the periodic check runs only every 15 min."""
         out = {}

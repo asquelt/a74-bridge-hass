@@ -33,7 +33,8 @@ Marketplace's record of the installed version out of step with what is on disk.
   Pi temperature, USB disconnect counter, bridge uptime.
 - Buttons: sync camera clock, restart the SDK session. Switch: recording (manual use from the panel only; the studio rule is that automations never start or stop recording).
 - Services (`a74_bridge.*`): `preset_save`, `preset_load` (settings files kept in `/share/camera_presets/<preset>/<camera>.DAT`,
-  load waits for the camera to reboot and verifies), `clock_sync`, `set_properties` (raw SDK values), `record`.
+  load waits for the camera to reboot and verifies), `preset_status` (a fresh drift check: per camera the active preset, `modified`
+  and the changed properties), `clock_sync`, `set_properties` (raw SDK values), `record`.
 - Studio hub (add it once from the integration menu): preset name text, preset list select, buttons Save / Load / Delete preset,
   Sync parameters / Sync full settings from the source camera (default `a74-bridge-1`, changeable in the entry options), last-action sensor.
   Presets live in `/share/camera_presets/<name>/` on the HA host (covered by HA backups when the `share` folder is included).
